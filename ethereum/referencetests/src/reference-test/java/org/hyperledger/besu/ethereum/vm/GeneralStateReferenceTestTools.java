@@ -61,7 +61,8 @@ public class GeneralStateReferenceTestTools {
         System.getProperty(
             "test.ethereum.state.eips",
             "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
-                + "London,Shanghai,Cancun");
+                + "London,Shanghai,Cancun,"
+                + "ETC_Magneto,ETC_Mystique,ETC_Phoenix");
     EIPS_TO_RUN = Arrays.asList(eips.split(","));
   }
 
@@ -92,7 +93,7 @@ public class GeneralStateReferenceTestTools {
 
     // Known incorrect test.
     params.ignore(
-        "RevertPrecompiledTouch(_storage)?-(EIP158|Byzantium|Constantinople|ConstantinopleFix)");
+        "RevertPrecompiledTouch(_storage)?-(EIP158|Byzantium|Constantinople|ConstantinopleFix|ETC_Magneto|ETC_Mystique|ETC_Phoenix)");
 
     // Gas integer value is too large to construct a valid transaction.
     params.ignore("OverflowGasRequire");
@@ -154,13 +155,15 @@ public class GeneralStateReferenceTestTools {
       worldStateUpdater.commit();
     }
 
-    // Check the world state root hash.
-    final Hash expectedRootHash = spec.getExpectedRootHash();
-    assertThat(worldState.rootHash())
-        .withFailMessage(
-            "Unexpected world state root hash; expected state: %s, computed state: %s",
-            spec.getExpectedRootHash(), worldState.rootHash())
-        .isEqualTo(expectedRootHash);
+    if (spec.getExpectException() == null) {
+      // Check the world state root hash.
+      final Hash expectedRootHash = spec.getExpectedRootHash();
+      assertThat(worldState.rootHash())
+          .withFailMessage(
+              "Unexpected world state root hash; expected state: %s, computed state: %s",
+              spec.getExpectedRootHash(), worldState.rootHash())
+          .isEqualTo(expectedRootHash);
+    }
 
     // Check the logs.
     final Hash expectedLogsHash = spec.getExpectedLogsHash();

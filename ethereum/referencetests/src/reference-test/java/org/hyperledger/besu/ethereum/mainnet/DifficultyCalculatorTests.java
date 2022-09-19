@@ -119,6 +119,46 @@ public class DifficultyCalculatorTests {
         Arguments.of(
           "/eth/DifficultyTests/dfHomestead/difficultyHomestead.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().homesteadBlock(0))
+        ),
+        Arguments.of(
+            "/etc/BasicTests/difficultyETC_Agharta.json",
+            MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().agharta(0))
+        ),
+        Arguments.of(
+            "/etc/BasicTests/difficultyETC_Atlantis.json",
+            MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().atlantis(0))
+        ),
+        Arguments.of(
+            "/etc/DifficultyTests/dfETC/difficultyETC_Agharta.json",
+            MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().agharta(0))
+        ),
+        Arguments.of(
+            "/etc/DifficultyTests/dfETC/difficultyETC_Atlantis.json",
+            MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().atlantis(0))
+        ),
+        Arguments.of(
+            "/etc/DifficultyTests/dfETC/difficultyETC_Magneto.json",
+            MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().magneto(0))
+        ),
+        Arguments.of(
+            "/etc/DifficultyTests/dfETC/difficultyETC_Mystique.json",
+            MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().mystique(0))
+        ),
+        Arguments.of(
+            "/etc/DifficultyTests/dfETC/difficultyETC_Phoenix.json",
+            MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().phoenix(0))
+        ),
+        Arguments.of(
+            "/etc/BasicTests/difficultyETC_Magneto.json",
+            MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().magneto(0))
+        ),
+        Arguments.of(
+            "/etc/BasicTests/difficultyETC_Mystique.json",
+            MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().mystique(0))
+        ),
+        Arguments.of(
+            "/etc/BasicTests/difficultyETC_Phoenix.json",
+            MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().phoenix(0))
         ));
   }
 

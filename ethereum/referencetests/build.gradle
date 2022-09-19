@@ -59,6 +59,23 @@ def generalstateRegressionReferenceTests = tasks.register("generalstateRegressio
     )
 }
 
+def etcGeneralstateReferenceTests = tasks.register("etcGeneralstateReferenceTests")  {
+  final referenceTestsPath = "src/reference-test/external-resources/etc/GeneralStateTests"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+    "etc/GeneralStateTests",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/generalstate",
+    "EtcGeneralStateReferenceTest",
+    "etc/GeneralStateTests/configs"
+    )
+}
+
+
 sourceSets {
   referenceTest {
     java {
@@ -67,7 +84,8 @@ sourceSets {
       srcDirs "src/reference-test/java",
         blockchainReferenceTests,
         generalstateReferenceTests,
-        generalstateRegressionReferenceTests
+        generalstateRegressionReferenceTests,
+        etcGeneralstateReferenceTests
     }
     resources {
       srcDirs 'src/reference-test/resources',

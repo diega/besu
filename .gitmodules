@@ -6,3 +6,6 @@
 	path = consensus/qbft/src/reference-test/resources
 	url = https://github.com/ConsenSys/qbft-tests.git
 	ignore = all
+[submodule "ethereum/referencetests/src/reference-test/external-resources/etc"]
+	path = ethereum/referencetests/src/reference-test/external-resources/etc
+	url = https://github.com/etclabscore/tests-etc.git

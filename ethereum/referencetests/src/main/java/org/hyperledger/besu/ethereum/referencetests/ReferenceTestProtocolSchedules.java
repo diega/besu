@@ -70,6 +70,9 @@ public class ReferenceTestProtocolSchedules {
     builder.put("GrayGlacier", createSchedule(new StubGenesisConfigOptions().grayGlacierBlock(0)));
     builder.put(
         "MergeNetSplit", createSchedule(new StubGenesisConfigOptions().mergeNetSplitBlock(0)));
+    builder.put("ETC_Magneto", createSchedule(new StubGenesisConfigOptions().magneto(0)));
+    builder.put("ETC_Mystique", createSchedule(new StubGenesisConfigOptions().mystique(0)));
+    builder.put("ETC_Phoenix", createSchedule(new StubGenesisConfigOptions().phoenix(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 
