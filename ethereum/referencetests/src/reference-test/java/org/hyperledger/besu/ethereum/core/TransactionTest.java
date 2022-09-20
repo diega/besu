@@ -57,7 +57,7 @@ public class TransactionTest {
         .getTransactionValidator();
   }
 
-  private static final String TEST_CONFIG_FILE_DIR_PATH = "TransactionTests/";
+  private static final String TEST_CONFIG_FILE_DIR_PATH = "eth/TransactionTests/";
 
   public static Stream<Arguments> getTestParametersForConfig() {
     return JsonTestParameters.create(TransactionTestCaseSpec.class)

@@ -29,7 +29,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 /** The Ethereum reference RLP tests. */
 public class RLPRefTest {
 
-  private static final String TEST_CONFIG_FILES = "RLPTests/rlptest.json";
+  private static final String TEST_CONFIG_FILES = "eth/RLPTests/rlptest.json";
 
   public static Stream<Arguments> getTestParametersForConfig() {
     return JsonTestParameters.create(RLPRefTestCaseSpec.class).generate(TEST_CONFIG_FILES).stream().map(params -> Arguments.of(params[0], params[1], params[2]));

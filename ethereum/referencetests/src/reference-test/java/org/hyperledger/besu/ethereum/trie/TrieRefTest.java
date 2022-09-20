@@ -29,7 +29,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class TrieRefTest {
 
-  private static final String[] TEST_CONFIG_FILES = {"TrieTests/trietest.json"};
+  private static final String[] TEST_CONFIG_FILES = {"eth/TrieTests/trietest.json"};
 
   public static Stream<Arguments> getTestParametersForConfig() {
     return JsonTestParameters.create(TrieRefTestCaseSpec.class).generate(TEST_CONFIG_FILES).stream().map(params -> Arguments.of(params[0], params[1], params[2]));

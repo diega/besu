@@ -48,12 +48,12 @@ public class DifficultyCalculatorTests {
   public static Stream<Arguments> getTestParametersForConfig() throws IOException {
     return Stream.of(
         Arguments.of(
-          "/BasicTests/difficultyMainNetwork.json",
+          "/eth/BasicTests/difficultyMainNetwork.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.mainnet().getConfigOptions(), EvmConfiguration.DEFAULT)
         ),
         Arguments.of(
-          "/BasicTests/difficultyRopsten.json",
+          "/eth/BasicTests/difficultyRopsten.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig(
                       Resources.toString(
@@ -63,61 +63,61 @@ public class DifficultyCalculatorTests {
               EvmConfiguration.DEFAULT)
         ),
         Arguments.of(
-          "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierForkBlock.json",
+          "/eth/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierForkBlock.json",
           MainnetProtocolSchedule.fromConfig(
               new StubGenesisConfigOptions().grayGlacierBlock(15050000))
         ),
         Arguments.of(
-                "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierTimeDiff1.json",
+                "/eth/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierTimeDiff1.json",
                 MainnetProtocolSchedule.fromConfig(
                         new StubGenesisConfigOptions().grayGlacierBlock(15050000))
         ),
         Arguments.of(
-                "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierTimeDiff2.json",
+                "/eth/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierTimeDiff2.json",
                 MainnetProtocolSchedule.fromConfig(
                         new StubGenesisConfigOptions().grayGlacierBlock(15050000))
         ),
         Arguments.of(
-          "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierForkBlock.json",
+          "/eth/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierForkBlock.json",
           MainnetProtocolSchedule.fromConfig(
               new StubGenesisConfigOptions().arrowGlacierBlock(13773000))
         ),
         Arguments.of(
-          "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierTimeDiff1.json",
+          "/eth/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierTimeDiff1.json",
           MainnetProtocolSchedule.fromConfig(
               new StubGenesisConfigOptions().arrowGlacierBlock(13773000))
         ),
         Arguments.of(
-          "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierTimeDiff2.json",
+          "/eth/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierTimeDiff2.json",
           MainnetProtocolSchedule.fromConfig(
               new StubGenesisConfigOptions().arrowGlacierBlock(13773000))
         ),
         Arguments.of(
-          "/DifficultyTests/dfByzantium/difficultyByzantium.json",
+          "/eth/DifficultyTests/dfByzantium/difficultyByzantium.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().byzantiumBlock(0))
         ),
         Arguments.of(
-          "/DifficultyTests/dfConstantinople/difficultyConstantinople.json",
+          "/eth/DifficultyTests/dfConstantinople/difficultyConstantinople.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().constantinopleBlock(0))
         ),
         Arguments.of(
-          "/DifficultyTests/dfEIP2384/difficultyEIP2384.json",
+          "/eth/DifficultyTests/dfEIP2384/difficultyEIP2384.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0))
         ),
         Arguments.of(
-          "/DifficultyTests/dfEIP2384/difficultyEIP2384_random.json",
+          "/eth/DifficultyTests/dfEIP2384/difficultyEIP2384_random.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0))
         ),
         Arguments.of(
-          "/DifficultyTests/dfEIP2384/difficultyEIP2384_random_to20M.json",
+          "/eth/DifficultyTests/dfEIP2384/difficultyEIP2384_random_to20M.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0))
         ),
         Arguments.of(
-          "/DifficultyTests/dfFrontier/difficultyFrontier.json",
+          "/eth/DifficultyTests/dfFrontier/difficultyFrontier.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions())
         ),
         Arguments.of(
-          "/DifficultyTests/dfHomestead/difficultyHomestead.json",
+          "/eth/DifficultyTests/dfHomestead/difficultyHomestead.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().homesteadBlock(0))
         ));
   }

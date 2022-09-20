@@ -14,7 +14,7 @@
  */
 
 def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
-  final referenceTestsPath = 'src/reference-test/external-resources/BlockchainTests'
+  final referenceTestsPath = 'src/reference-test/external-resources/eth/BlockchainTests'
   final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
   inputs.files fileTree(referenceTestsPath),
     fileTree(generatedTestsPath)
@@ -22,7 +22,7 @@ def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
   generateTestFiles(
     fileTree(referenceTestsPath),
     file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
-    "BlockchainTests",
+    "eth/BlockchainTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/blockchain",
     "BlockchainReferenceTest",
     ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
@@ -30,7 +30,7 @@ def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
 }
 
 def generalstateReferenceTests = tasks.register("generalstateReferenceTests")  {
-  final referenceTestsPath = "src/reference-test/external-resources/GeneralStateTests"
+  final referenceTestsPath = "src/reference-test/external-resources/eth/GeneralStateTests"
   final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
   inputs.files fileTree(referenceTestsPath),
     fileTree(generatedTestsPath)
@@ -38,7 +38,7 @@ def generalstateReferenceTests = tasks.register("generalstateReferenceTests")  {
   generateTestFiles(
     fileTree(referenceTestsPath),
     file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
-    "GeneralStateTests",
+    "eth/GeneralStateTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/generalstate",
     "GeneralStateReferenceTest"
     )
@@ -113,8 +113,8 @@ dependencies {
 task referenceTests(type: Test) {
   useJUnitPlatform()
   doFirst {
-    if (!file("src/reference-test/external-resources/README.md").exists()) {
-      throw new GradleException("ethereum/referencetest/src/reference-test/external-resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
+    if (!file("src/reference-test/external-resources/eth/README.md").exists()) {
+      throw new GradleException("ethereum/referencetest/src/reference-test/external-resources/eth/README.md missing: please clone submodules (git submodule update --init --recursive)")
     }
   }
   description = 'Runs ETH reference tests.'
@@ -127,7 +127,7 @@ task ('validateReferenceTestSubmodule') {
   doLast {
     def result = new ByteArrayOutputStream()
     def expectedHash = '638da7ca7b2ca371ebb33d7d7d2562981aafd9b2'
-    def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
+    def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources/eth").toAbsolutePath()
     try {
       exec {
         executable 'git'
