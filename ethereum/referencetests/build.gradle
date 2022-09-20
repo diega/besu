@@ -162,7 +162,7 @@ following commands:
 processResources.dependsOn('validateReferenceTestSubmodule')
 
 def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix, String ... excludedPath) {
-  def pep = mkdir(destination)
+  mkdir(destination)
   def referenceTestTemplate = templateFile.text
 
   // This is how many json files to include in each test file
