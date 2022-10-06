@@ -173,7 +173,7 @@ public class DifficultyCalculatorTests {
               .timestamp(extractLong(value, "parentTimestamp"))
               .difficulty(Difficulty.fromHexString(value.get("parentDifficulty").asText()))
               .ommersHash(
-                  parentUncles.equals("0x00")
+                  parentUncles.equals("0x00") || parentUncles.equals("0x0")
                       ? Hash.EMPTY_LIST_HASH
                       : Hash.fromHexStringLenient(parentUncles))
               .number(currentBlockNumber)
