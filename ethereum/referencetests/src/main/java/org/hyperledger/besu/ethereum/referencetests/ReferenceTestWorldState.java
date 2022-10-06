@@ -44,11 +44,14 @@ public class ReferenceTestWorldState extends DefaultMutableWorldState {
     private final Map<UInt256, UInt256> storage;
 
     private static Map<UInt256, UInt256> parseStorage(final Map<String, String> values) {
+      if (values == null) {
+        return Collections.emptyMap();
+      }
       final Map<UInt256, UInt256> storage = new HashMap<>();
       for (final Map.Entry<String, String> entry : values.entrySet()) {
         storage.put(UInt256.fromHexString(entry.getKey()), UInt256.fromHexString(entry.getValue()));
       }
-      return storage;
+      return Collections.unmodifiableMap(storage);
     }
 
     public AccountMock(
