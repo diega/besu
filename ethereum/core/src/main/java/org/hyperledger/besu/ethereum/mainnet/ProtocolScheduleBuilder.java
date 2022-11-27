@@ -240,6 +240,7 @@ public class ProtocolScheduleBuilder {
             create(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
             create(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
             create(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
+            create(config.getIcemanBlockNumber(), specFactory.icemanDefinition(config)),
             create(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()))
         .filter(Optional::isPresent)
         .map(Optional::get)
@@ -337,6 +338,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Thanos", config.getThanosBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Magneto", config.getMagnetoBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Mystique", config.getMystiqueBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Iceman", config.getIcemanBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 }

@@ -362,6 +362,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getIcemanBlockNumber() {
+    return getOptionalLong("icemanblock");
+  }
+
+  @Override
   public OptionalLong getEcip1049BlockNumber() {
     return getOptionalLong("ecip1049block");
   }
@@ -450,6 +455,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
     getMystiqueBlockNumber().ifPresent(l -> builder.put("mystiqueBlock", l));
     getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
+    getIcemanBlockNumber().ifPresent(l -> builder.put("icemanBlock", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
@@ -568,6 +574,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getThanosBlockNumber(),
             getMagnetoBlockNumber(),
             getMystiqueBlockNumber(),
+            getIcemanBlockNumber(),
             getEcip1049BlockNumber());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 

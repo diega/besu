@@ -167,4 +167,17 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockNumber(8_897_988L).getName()).isEqualTo("London");
     Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("London");
   }
+
+  @Test
+  public void shouldCreateIcemanConfig() throws Exception {
+    final ProtocolSchedule sched =
+        MainnetProtocolSchedule.fromConfig(
+            GenesisConfigFile.fromConfig(
+                    Resources.toString(
+                        this.getClass().getResource("/iceman.json"), StandardCharsets.UTF_8))
+                .getConfigOptions(),
+            EvmConfiguration.DEFAULT);
+    Assertions.assertThat(sched.getByBlockNumber(0L).getName()).isEqualTo("Iceman");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Iceman");
+  }
 }

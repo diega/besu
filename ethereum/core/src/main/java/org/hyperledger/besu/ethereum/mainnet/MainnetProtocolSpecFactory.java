@@ -300,4 +300,16 @@ public class MainnetProtocolSpecFactory {
         quorumCompatibilityMode,
         evmConfiguration);
   }
+
+  public ProtocolSpecBuilder icemanDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return ClassicProtocolSpecs.icemanDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        ecip1017EraRounds,
+        quorumCompatibilityMode,
+        evmConfiguration,
+        genesisConfigOptions);
+  }
 }

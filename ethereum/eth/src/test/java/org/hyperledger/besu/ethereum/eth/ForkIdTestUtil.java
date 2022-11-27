@@ -60,6 +60,10 @@ public class ForkIdTestUtil {
         "0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a";
     public static final String SHANDONG =
         "0xbea94d3492ed9c41556a1c45c27da4947938880fb4c15f31fb742e5a1c10a2fb";
+
+    public static final String ICEMAN =
+        "0xbea94d3492ed9c41556a1c45c27da4947938880fb4c15f31fb742e5a1c10a2fb";
+
     public static final String PRIVATE =
         "0x0000000000000000000000000000000000000000000000000000000000000000";
   }
@@ -77,6 +81,9 @@ public class ForkIdTestUtil {
         Arrays.asList(1L, 2L, 3L, 3L, 1035301L, 3660663L, 4321234L, 5435345L);
     public static final List<Long> GOERLI = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 1561651L);
     public static final List<Long> SHANDONG =
+        Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
+
+    public static final List<Long> ICEMAN =
         Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
     public static final List<Long> PRIVATE = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
   }
@@ -134,6 +141,7 @@ public class ForkIdTestUtil {
     public static final Network RINKEBY = network(GenesisHash.RINKEBY, Forks.RINKEBY);
     public static final Network GOERLI = network(GenesisHash.GOERLI, Forks.GOERLI);
     public static final Network SHANDONG = network(GenesisHash.SHANDONG, Forks.SHANDONG);
+    public static final Network ICEMAN = network(GenesisHash.ICEMAN, Forks.ICEMAN);
     public static final Network PRIVATE = network(GenesisHash.PRIVATE, Forks.PRIVATE);
     public final String hash;
     public final List<Long> forks;

@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHasher;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
@@ -393,5 +395,36 @@ public class ClassicProtocolSpecs {
                     List.of(MaxCodeSizeRule.of(contractSizeLimit), PrefixCodeRule.of()),
                     1))
         .name("Mystique");
+  }
+
+  static ProtocolSpecBuilder icemanDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration,
+      final GenesisConfigOptions genesisConfigOptions) {
+    final long icemanForkBlockNumber =
+        genesisConfigOptions.getIcemanBlockNumber().orElse(Long.MAX_VALUE);
+    BaseFeeMarket londonFeeMarket =
+        FeeMarket.london(icemanForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+    return mystiqueDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            ecip1017EraRounds,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .feeMarket(londonFeeMarket)
+        .gasLimitCalculator(
+            new LondonTargetingGasLimitCalculator(icemanForkBlockNumber, londonFeeMarket))
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.london(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .name("Iceman");
   }
 }

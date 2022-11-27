@@ -235,6 +235,8 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getEcip1049BlockNumber();
 
+  OptionalLong getIcemanBlockNumber();
+
   Optional<BigInteger> getChainId();
 
   OptionalInt getContractSizeLimit();

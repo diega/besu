@@ -204,6 +204,12 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetIcemanBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("icemanBlock", 1000));
+    assertThat(config.getIcemanBlockNumber()).hasValue(1000);
+  }
+
+  @Test
   // TODO ECIP-1049 change for the actual fork name when known
   public void shouldGetECIP1049BlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ecip1049block", 1000));
@@ -227,6 +233,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getArrowGlacierBlockNumber()).isEmpty();
     assertThat(config.getGrayGlacierBlockNumber()).isEmpty();
     assertThat(config.getShandongBlockNumber()).isEmpty();
+    assertThat(config.getIcemanBlockNumber()).isEmpty();
     assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 

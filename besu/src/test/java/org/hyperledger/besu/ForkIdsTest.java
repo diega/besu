@@ -163,6 +163,12 @@ public class ForkIdsTest {
                 new ForkId(Bytes.ofUnsignedInt(0xc5459816L), 0L))
           },
           new Object[] {
+            NetworkName.ICEMAN,
+            List.of(
+                new ForkId(Bytes.ofUnsignedInt(0x260c73d7L), 0L),
+                new ForkId(Bytes.ofUnsignedInt(0x260c73d7L), 0L))
+          },
+          new Object[] {
             NetworkName.CLASSIC,
             List.of(
                 new ForkId(Bytes.ofUnsignedInt(0xfc64ec04L), 1150000L),

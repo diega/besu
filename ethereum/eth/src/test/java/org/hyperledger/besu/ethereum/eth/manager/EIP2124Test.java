@@ -535,6 +535,31 @@ public class EIP2124Test {
             empty(),
             empty()
           },
+          // Iceman network test cases
+          {
+            "Iceman // Unsynced",
+            Network.ICEMAN,
+            0L,
+            ForkIdTestUtil.wantForkId("0x260c73d7", 0L),
+            empty(),
+            empty()
+          },
+          {
+            "Iceman // First block",
+            Network.ICEMAN,
+            1L,
+            ForkIdTestUtil.wantForkId("0x260c73d7", 0L),
+            empty(),
+            empty()
+          },
+          {
+            "Iceman // Future block",
+            Network.ICEMAN,
+            1000000L,
+            ForkIdTestUtil.wantForkId("0x260c73d7", 0L),
+            empty(),
+            empty()
+          },
           // Private network test cases
           {
             "Private // Unsynced",

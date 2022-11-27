@@ -46,6 +46,7 @@ class NetworkDeprecationMessageTest {
         "KOTTI",
         "MORDOR",
         "ECIP1049_DEV",
+        "ICEMAN",
         "ASTOR"
       })
   void shouldThrowErrorForNonDeprecatedNetworks(final NetworkName network) {

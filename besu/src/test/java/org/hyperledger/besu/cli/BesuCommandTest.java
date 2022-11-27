@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.startsWith;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.GOERLI;
+import static org.hyperledger.besu.cli.config.NetworkName.ICEMAN;
 import static org.hyperledger.besu.cli.config.NetworkName.KILN;
 import static org.hyperledger.besu.cli.config.NetworkName.KOTTI;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
@@ -40,6 +41,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_DISCOVERY_URL;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.ICEMAN_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
@@ -1057,6 +1059,22 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.getBootNodes()).isEqualTo(SHANDONG_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isNull();
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1337903));
+  }
+
+  @Test
+  public void testGenesisPathIcemanEtcConfig() {
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand("--network", "iceman");
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getBootNodes()).isEqualTo(ICEMAN_BOOTSTRAP_NODES);
+    assertThat(config.getDnsDiscoveryUrl()).isNull();
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(141592));
   }
 
   @Test
@@ -4061,6 +4079,24 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void icemanValuesAreUsed() {
+    parseCommand("--network", "iceman");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(ICEMAN));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, never()).warn(contains("Iceman is deprecated and will be shutdown"));
+  }
+
+  @Test
   public void rinkebyValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("rinkeby");
   }
@@ -4077,6 +4113,11 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   public void shandongValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("shandong");
+  }
+
+  @Test
+  public void icemanValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("iceman");
   }
 
   @Test

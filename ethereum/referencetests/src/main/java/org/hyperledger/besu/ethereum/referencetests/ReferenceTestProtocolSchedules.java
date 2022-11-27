@@ -77,6 +77,7 @@ public class ReferenceTestProtocolSchedules {
         "Shanghai",
         createSchedule(new StubGenesisConfigOptions().shandongBlock(0).baseFeePerGas(0x0a)));
     builder.put("Shandong", createSchedule(new StubGenesisConfigOptions().shandongBlock(0)));
+    builder.put("Iceman", createSchedule(new StubGenesisConfigOptions().icemanBlock(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 
