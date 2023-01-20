@@ -1,0 +1,46 @@
+plugins {
+  id 'java'
+  id 'org.springframework.boot' version '2.7.5'
+  id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+}
+
+repositories {
+  mavenCentral()
+  maven { url "https://hyperledger.jfrog.io/hyperledger/besu-maven" }
+  maven { url "https://artifacts.consensys.net/public/maven/maven/" }
+  maven { url "https://splunk.jfrog.io/splunk/ext-releases-local" }
+  maven { url "https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/"}
+}
+
+dependencies {
+  implementation 'org.springframework.boot:spring-boot-starter'
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+  implementation project(':ethereum:api')
+  implementation project(':ethereum:blockcreation')
+  implementation project(':ethereum:core')
+  implementation project(':ethereum:trie')
+  implementation project(':ethereum:p2p')
+  implementation project(':ethereum:eth')
+  implementation project(':ethereum:rlp')
+  implementation project(':consensus:merge')
+  implementation project(':nat')
+  implementation project(':besu')
+  implementation project(':config')
+  implementation project(':consensus:clique')
+  implementation project(':crypto')
+  implementation project(':plugins:rocksdb')
+  implementation project(':metrics:core')
+  implementation project(':ethereum:permissioning')
+  implementation project(':datatypes')
+  implementation project(':consensus:common')
+  implementation project(':services:kvstore')
+  implementation project(':consensus:qbft')
+  implementation project(':consensus:ibft')
+  implementation project(':evm')
+
+  implementation 'com.google.guava:guava'
+  implementation 'io.vertx:vertx-core'
+  implementation 'io.vertx:vertx-web'
+  annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+}

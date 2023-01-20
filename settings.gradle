@@ -28,6 +28,8 @@ pluginManagement {
         includeGroup('com.hierynomus.gradle.plugins')
       }
     }
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://repo.spring.io/snapshot' }
     gradlePluginPortal()
   }
 }
@@ -77,5 +79,8 @@ include 'privacy-contracts'
 include 'services:kvstore'
 include 'services:pipeline'
 include 'services:tasks'
+include 'spring-main:spring-main'
 include 'testutil'
 include 'util'
+
+findProject(':spring-main:spring-main')?.name = 'spring-main'
