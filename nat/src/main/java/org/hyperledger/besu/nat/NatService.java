@@ -28,6 +28,9 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 /** Utility class to help interacting with various {@link NatManager}. */
 public class NatService {
 
@@ -39,7 +42,8 @@ public class NatService {
   private Optional<NatManager> currentNatManager;
   private final boolean fallbackEnabled;
 
-  public NatService(final Optional<NatManager> natManager, final boolean fallbackEnabled) {
+  @Inject
+  public NatService(final Optional<NatManager> natManager, @Named("fallbackEnabled") final boolean fallbackEnabled) {
     this.currentNatMethod = retrieveNatMethod(natManager);
     this.currentNatManager = natManager;
     this.fallbackEnabled = fallbackEnabled;
