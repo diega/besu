@@ -59,7 +59,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
 
-    if (imlementsBaseFeeMarket()) {
+    if (implementsBaseFeeMarket()) {
       if (header.getBaseFee().isEmpty()) {
         LOG.info("Invalid block header: missing mandatory base fee.");
         return false;
@@ -125,7 +125,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     out.writeLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(header.getExtraData());
-    if (imlementsBaseFeeMarket() && header.getBaseFee().isPresent()) {
+    if (implementsBaseFeeMarket() && header.getBaseFee().isPresent()) {
       out.writeUInt256Scalar(header.getBaseFee().get());
     }
     out.endList();
@@ -138,7 +138,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
     return false;
   }
 
-  private boolean imlementsBaseFeeMarket() {
+  private boolean implementsBaseFeeMarket() {
     return feeMarket.map(FeeMarket::implementsBaseFee).orElse(FALSE);
   }
 }
