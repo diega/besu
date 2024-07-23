@@ -66,7 +66,7 @@ public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
       if (price.compareTo(baseFee.orElseThrow()) < 0) {
         LOG.warn(
             "Invalid block: transaction gas price {} must be greater than base fee {}",
-            price.toString(),
+            price,
             baseFee.orElseThrow());
         return false;
       }
