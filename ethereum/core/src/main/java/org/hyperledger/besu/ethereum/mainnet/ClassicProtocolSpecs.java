@@ -369,4 +369,20 @@ public class ClassicProtocolSpecs {
                     CoinbaseFeePriceCalculator.frontier()))
         .name("Spiral");
   }
+
+  public static ProtocolSpecBuilder sinisterDefinition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final OptionalLong ecip1017EraRounds,
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
+    return spiralDefinition(
+        chainId,
+        enableRevertReason,
+        ecip1017EraRounds,
+        evmConfiguration,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
+  }
 }

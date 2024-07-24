@@ -70,6 +70,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private OptionalLong magnetoBlockNumber = OptionalLong.empty();
   private OptionalLong mystiqueBlockNumber = OptionalLong.empty();
   private OptionalLong spiralBlockNumber = OptionalLong.empty();
+  private OptionalLong sinisterBlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -347,6 +348,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
+  public OptionalLong getSinisterBlockNumber() {
+    return sinisterBlockNumber;
+  }
+
+  @Override
   public OptionalInt getContractSizeLimit() {
     return contractSizeLimit;
   }
@@ -406,6 +412,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
     getMystiqueBlockNumber().ifPresent(l -> builder.put("mystiqueBlock", l));
     getSpiralBlockNumber().ifPresent(l -> builder.put("spiralBlock", l));
+    getSinisterBlockNumber().ifPresent(l -> builder.put("sinisterBlock", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
@@ -895,6 +902,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions spiral(final long blockNumber) {
     spiralBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  /**
+   * Sinister stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions sinister(final long blockNumber) {
+    sinisterBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

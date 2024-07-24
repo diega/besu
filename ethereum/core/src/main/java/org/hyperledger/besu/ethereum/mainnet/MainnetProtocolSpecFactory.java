@@ -366,4 +366,14 @@ public class MainnetProtocolSpecFactory {
         isParallelTxProcessingEnabled,
         metricsSystem);
   }
+
+  public ProtocolSpecBuilder sinisterDefinition() {
+    return ClassicProtocolSpecs.sinisterDefinition(
+        chainId,
+        isRevertReasonEnabled,
+        ecip1017EraRounds,
+        evmConfiguration,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
+  }
 }

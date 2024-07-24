@@ -450,6 +450,15 @@ public interface GenesisConfigOptions {
   OptionalLong getSpiralBlockNumber();
 
   /**
+   * Block number to activate Sinister on Classic networks.
+   *
+   * @return block number of Sinister fork on Classic networks
+   * @see <a
+   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-xxxx">https://ecips.ethereumclassic.org/ECIPs/ecip-xxxx</a>
+   */
+  OptionalLong getSinisterBlockNumber();
+
+  /**
    * Gets chain id.
    *
    * @return the chain id

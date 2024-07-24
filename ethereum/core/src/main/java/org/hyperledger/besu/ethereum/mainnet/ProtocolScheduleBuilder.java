@@ -301,6 +301,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Magneto", config.getMagnetoBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Mystique", config.getMystiqueBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Spiral", config.getSpiralBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Sinister", config.getSpiralBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 
@@ -468,7 +469,11 @@ public class ProtocolScheduleBuilder {
             blockNumberMilestone(
                 HardforkId.ClassicHardforkId.SPIRAL,
                 config.getSpiralBlockNumber(),
-                specFactory.spiralDefinition()))
+                specFactory.spiralDefinition()),
+            blockNumberMilestone(
+                HardforkId.ClassicHardforkId.SINISTER,
+                config.getSinisterBlockNumber(),
+                specFactory.sinisterDefinition()))
         .flatMap(Optional::stream)
         .toList();
   }

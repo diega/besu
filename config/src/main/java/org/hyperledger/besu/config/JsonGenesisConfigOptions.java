@@ -401,6 +401,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getSinisterBlockNumber() {
+    return getOptionalLong("sinisterblock");
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return getOptionalBigInteger("chainid");
   }
@@ -496,6 +501,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
     getMystiqueBlockNumber().ifPresent(l -> builder.put("mystiqueBlock", l));
     getSpiralBlockNumber().ifPresent(l -> builder.put("spiralBlock", l));
+    getSinisterBlockNumber().ifPresent(l -> builder.put("sinisterBlock", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
@@ -610,7 +616,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getThanosBlockNumber(),
             getMagnetoBlockNumber(),
             getMystiqueBlockNumber(),
-            getSpiralBlockNumber());
+            getSpiralBlockNumber(),
+            getSinisterBlockNumber());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockNumbers

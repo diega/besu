@@ -391,7 +391,8 @@ public class AdminNodeInfoTest {
             .thanos(9)
             .magneto(10)
             .mystique(11)
-            .spiral(12);
+            .spiral(12)
+            .sinister(13);
 
     final AdminNodeInfo methodClassic =
         new AdminNodeInfo(
@@ -420,6 +421,7 @@ public class AdminNodeInfoTest {
                 "magnetoBlock", 10L));
     expectedConfig.put("mystiqueBlock", 11L);
     expectedConfig.put("spiralBlock", 12L);
+    expectedConfig.put("sinisterBlock", 13L);
 
     final JsonRpcResponse response = methodClassic.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);

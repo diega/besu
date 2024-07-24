@@ -86,6 +86,7 @@
 - Nodes in a permissioned chain maintain (and retry) connections to bootnodes [#7257](https://github.com/hyperledger/besu/pull/7257)
 - Promote experimental `besu storage x-trie-log` subcommand to production-ready [#7278](https://github.com/hyperledger/besu/pull/7278)
 - Enhanced BFT round-change diagnostics [#7271](https://github.com/hyperledger/besu/pull/7271)
+- Ethereum Classic Sinister network upgrade [#XXXX](https://github.com/hyperledger/besu/pull/XXXX)
 
 ### Bug fixes
 - Validation errors ignored in accounts-allowlist and empty list [#7138](https://github.com/hyperledger/besu/issues/7138)

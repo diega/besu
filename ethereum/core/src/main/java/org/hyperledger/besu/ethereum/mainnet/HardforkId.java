@@ -56,6 +56,7 @@ public interface HardforkId {
     THANOS,
     MAGNETO,
     MYSTIQUE,
-    SPIRAL
+    SPIRAL,
+    SINISTER,
   }
 }
