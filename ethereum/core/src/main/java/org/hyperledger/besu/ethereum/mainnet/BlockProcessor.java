@@ -154,11 +154,7 @@ public interface BlockProcessor {
    * @param ommerBlockNumber number of the block ommer
    * @return ommer reward
    */
-  default Wei getOmmerReward(
-      final Wei blockReward, final long blockNumber, final long ommerBlockNumber) {
-    final long distance = blockNumber - ommerBlockNumber;
-    return blockReward.subtract(blockReward.multiply(distance).divide(8));
-  }
+  Wei getOmmerReward(final Wei blockReward, final long blockNumber, final long ommerBlockNumber);
 
   /**
    * Get coinbase reward in ${@link Wei}
@@ -168,8 +164,5 @@ public interface BlockProcessor {
    * @param numberOfOmmers number of ommers for this block
    * @return coinbase reward
    */
-  default Wei getCoinbaseReward(
-      final Wei blockReward, final long blockNumber, final int numberOfOmmers) {
-    return blockReward.add(blockReward.multiply(numberOfOmmers).divide(32));
-  }
+  Wei getCoinbaseReward(final Wei blockReward, final long blockNumber, final int numberOfOmmers);
 }

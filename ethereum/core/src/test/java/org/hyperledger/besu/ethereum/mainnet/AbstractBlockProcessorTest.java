@@ -152,12 +152,24 @@ abstract class AbstractBlockProcessorTest {
     }
 
     @Override
-    boolean rewardCoinbase(
+    public boolean rewardCoinbase(
         final MutableWorldState worldState,
         final BlockHeader header,
         final List<BlockHeader> ommers,
         final boolean skipZeroBlockRewards) {
       return false;
+    }
+
+    @Override
+    public Wei getOmmerReward(
+        final Wei blockReward, final long blockNumber, final long ommerBlockNumber) {
+      throw new IllegalStateException("Not implemented");
+    }
+
+    @Override
+    public Wei getCoinbaseReward(
+        final Wei blockReward, final long blockNumber, final int numberOfOmmers) {
+      throw new IllegalStateException("Not implemented");
     }
   }
 }

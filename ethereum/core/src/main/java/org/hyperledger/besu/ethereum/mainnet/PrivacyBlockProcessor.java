@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
@@ -111,6 +112,22 @@ public class PrivacyBlockProcessor implements BlockProcessor {
             metadataUpdater);
     metadataUpdater.commit();
     return result;
+  }
+
+  @Override
+  public Wei getOmmerReward(
+      final Wei blockReward, final long blockNumber, final long ommerBlockNumber) {
+    return Wei.ZERO;
+  }
+
+  @Override
+  public Wei getCoinbaseReward(
+      final Blockchain blockchain,
+      final Wei blockReward,
+      final Hash parentHash,
+      final long blockNumber,
+      final int numberOfOmmers) {
+    return Wei.ZERO;
   }
 
   void maybeRehydrate(

@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -302,11 +303,41 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     return miningBeneficiaryCalculator;
   }
 
-  abstract boolean rewardCoinbase(
+  protected boolean rewardCoinbase(
       final MutableWorldState worldState,
       final BlockHeader header,
       final List<BlockHeader> ommers,
-      final boolean skipZeroBlockRewards);
+      final boolean skipZeroBlockRewards) {
+    if (skipZeroBlockRewards && blockReward.isZero()) {
+      return true;
+    }
+
+    final Wei coinbaseReward = getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
+    final WorldUpdater updater = worldState.updater();
+    final Address miningBeneficiary = getMiningBeneficiaryCalculator().calculateBeneficiary(header);
+    final MutableAccount miningBeneficiaryAccount = updater.getOrCreate(miningBeneficiary);
+
+    miningBeneficiaryAccount.incrementBalance(coinbaseReward);
+    for (final BlockHeader ommerHeader : ommers) {
+      if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
+        LOG.info(
+            "Block processing error: ommer block number {} more than {} generations. Block {}",
+            ommerHeader.getNumber(),
+            MAX_GENERATION,
+            header.getHash().toHexString());
+        return false;
+      }
+
+      final MutableAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
+      final Wei ommerReward =
+          getOmmerReward(blockReward, header.getNumber(), ommerHeader.getNumber());
+      ommerCoinbase.incrementBalance(ommerReward);
+    }
+
+    updater.commit();
+
+    return true;
+  }
 
   public interface PreprocessingContext {}
   ;

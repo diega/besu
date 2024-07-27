@@ -14,21 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MainnetBlockProcessor extends AbstractBlockProcessor {
-
-  private static final Logger LOG = LoggerFactory.getLogger(MainnetBlockProcessor.class);
 
   public MainnetBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -47,39 +35,15 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
   }
 
   @Override
-  protected boolean rewardCoinbase(
-      final MutableWorldState worldState,
-      final BlockHeader header,
-      final List<BlockHeader> ommers,
-      final boolean skipZeroBlockRewards) {
-    if (skipZeroBlockRewards && blockReward.isZero()) {
-      return true;
-    }
+  public Wei getOmmerReward(
+      final Wei blockReward, final long blockNumber, final long ommerBlockNumber) {
+    final long distance = blockNumber - ommerBlockNumber;
+    return blockReward.subtract(blockReward.multiply(distance).divide(8));
+  }
 
-    final Wei coinbaseReward = getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
-    final WorldUpdater updater = worldState.updater();
-    final Address miningBeneficiary = getMiningBeneficiaryCalculator().calculateBeneficiary(header);
-    final MutableAccount miningBeneficiaryAccount = updater.getOrCreate(miningBeneficiary);
-
-    miningBeneficiaryAccount.incrementBalance(coinbaseReward);
-    for (final BlockHeader ommerHeader : ommers) {
-      if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
-        LOG.info(
-            "Block processing error: ommer block number {} more than {} generations. Block {}",
-            ommerHeader.getNumber(),
-            MAX_GENERATION,
-            header.getHash().toHexString());
-        return false;
-      }
-
-      final MutableAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
-      final Wei ommerReward =
-          getOmmerReward(blockReward, header.getNumber(), ommerHeader.getNumber());
-      ommerCoinbase.incrementBalance(ommerReward);
-    }
-
-    updater.commit();
-
-    return true;
+  @Override
+  public Wei getCoinbaseReward(
+      final Wei blockReward, final long blockNumber, final int numberOfOmmers) {
+    return blockReward.add(blockReward.multiply(numberOfOmmers).divide(32));
   }
 }

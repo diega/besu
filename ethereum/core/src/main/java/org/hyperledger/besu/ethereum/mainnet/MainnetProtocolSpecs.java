@@ -1005,6 +1005,18 @@ public abstract class MainnetProtocolSpecs {
           privateMetadataUpdater);
     }
 
+    @Override
+    public Wei getOmmerReward(
+        final Wei blockReward, final long blockNumber, final long ommerBlockNumber) {
+      return wrapped.getOmmerReward(blockReward, blockNumber, ommerBlockNumber);
+    }
+
+    @Override
+    public Wei getCoinbaseReward(
+        final Wei blockReward, final long blockNumber, final int numberOfOmmers) {
+      return wrapped.getCoinbaseReward(blockReward, blockNumber, numberOfOmmers);
+    }
+
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =
         Address.fromHexString("0xbf4ed7b27f1d666546e30d74d50d173d20bca754");
 
