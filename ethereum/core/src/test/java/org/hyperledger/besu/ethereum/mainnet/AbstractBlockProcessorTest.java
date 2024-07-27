@@ -152,13 +152,10 @@ abstract class AbstractBlockProcessorTest {
     }
 
     @Override
-    public boolean rewardCoinbase(
+    public void distributeRewards(
         final MutableWorldState worldState,
         final BlockHeader header,
-        final List<BlockHeader> ommers,
-        final boolean skipZeroBlockRewards) {
-      return false;
-    }
+        final List<BlockHeader> ommers) {}
 
     @Override
     public Wei getOmmerReward(

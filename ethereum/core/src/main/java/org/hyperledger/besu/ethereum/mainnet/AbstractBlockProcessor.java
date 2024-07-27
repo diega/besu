@@ -222,12 +222,16 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       maybeRequests = requestProcessor.get().process(context);
     }
 
-    if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
-      // no need to log, rewardCoinbase logs the error.
-      if (worldState instanceof BonsaiWorldState) {
-        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+    if (!(skipZeroBlockRewards && blockReward.isZero())) {
+      try {
+        distributeRewards(worldState, blockHeader, ommers);
+      } catch (IllegalArgumentException e) {
+        if (worldState instanceof BonsaiWorldState) {
+          ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+        }
+        // no need to log, distributeRewards logs the error.
+        return new BlockProcessingResult(Optional.empty(), "ommer too old");
       }
-      return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
 
     try {
@@ -303,15 +307,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     return miningBeneficiaryCalculator;
   }
 
-  protected boolean rewardCoinbase(
+  protected void distributeRewards(
       final MutableWorldState worldState,
       final BlockHeader header,
-      final List<BlockHeader> ommers,
-      final boolean skipZeroBlockRewards) {
-    if (skipZeroBlockRewards && blockReward.isZero()) {
-      return true;
-    }
-
+      final List<BlockHeader> ommers) {
     final Wei coinbaseReward = getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
     final WorldUpdater updater = worldState.updater();
     final Address miningBeneficiary = getMiningBeneficiaryCalculator().calculateBeneficiary(header);
@@ -325,7 +324,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             ommerHeader.getNumber(),
             MAX_GENERATION,
             header.getHash().toHexString());
-        return false;
+        throw new IllegalArgumentException("Ommer is too old to receive reward");
       }
 
       final MutableAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
@@ -333,10 +332,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           getOmmerReward(blockReward, header.getNumber(), ommerHeader.getNumber());
       ommerCoinbase.incrementBalance(ommerReward);
     }
-
     updater.commit();
-
-    return true;
   }
 
   public interface PreprocessingContext {}
