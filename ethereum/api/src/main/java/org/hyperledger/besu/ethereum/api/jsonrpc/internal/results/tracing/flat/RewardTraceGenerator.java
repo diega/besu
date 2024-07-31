@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
@@ -35,12 +36,13 @@ public class RewardTraceGenerator {
   /**
    * Generates a stream of reward {@link Trace} from the passed {@link Block} data.
    *
+   * @param blockchain the {@link Blockchain} to use
    * @param protocolSchedule the {@link ProtocolSchedule} to use
    * @param block the current {@link Block} to use
    * @return a stream of generated reward traces {@link Trace}
    */
   public static Stream<Trace> generateFromBlock(
-      final ProtocolSchedule protocolSchedule, final Block block) {
+      final Blockchain blockchain, final ProtocolSchedule protocolSchedule, final Block block) {
 
     final List<Trace> flatTraces = new ArrayList<>();
 
@@ -54,7 +56,12 @@ public class RewardTraceGenerator {
     final Wei coinbaseReward =
         protocolSpec
             .getBlockProcessor()
-            .getCoinbaseReward(blockReward, blockHeader.getNumber(), ommers.size());
+            .getCoinbaseReward(
+                blockchain,
+                blockReward,
+                blockHeader.getParentHash(),
+                blockHeader.getNumber(),
+                ommers.size());
 
     // add uncle reward traces
     ommers.forEach(

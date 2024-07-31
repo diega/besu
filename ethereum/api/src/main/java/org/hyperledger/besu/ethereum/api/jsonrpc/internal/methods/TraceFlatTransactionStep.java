@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -33,14 +34,17 @@ import java.util.stream.Stream;
 public class TraceFlatTransactionStep
     implements Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>> {
 
+  private final Blockchain blockchain;
   private final ProtocolSchedule protocolSchedule;
   private final Block block;
   private final Optional<FilterParameter> filterParameter;
 
   public TraceFlatTransactionStep(
+      final Blockchain blockchain,
       final ProtocolSchedule protocolSchedule,
       final Block block,
       final Optional<FilterParameter> filterParameter) {
+    this.blockchain = blockchain;
     this.protocolSchedule = protocolSchedule;
     this.block = block;
     this.filterParameter = filterParameter;
@@ -52,7 +56,7 @@ public class TraceFlatTransactionStep
     Block block = this.block;
     if (block == null) block = transactionTrace.getBlock().get();
     if (transactionTrace.getTransaction() == null) {
-      traceStream = RewardTraceGenerator.generateFromBlock(protocolSchedule, block);
+      traceStream = RewardTraceGenerator.generateFromBlock(blockchain, protocolSchedule, block);
     } else {
       traceStream =
           FlatTraceGenerator.generateFromTransactionTraceAndBlock(

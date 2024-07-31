@@ -173,7 +173,10 @@ public class TraceFilter extends TraceBlock {
                   Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>>
                       traceFlatTransactionStep =
                           new TraceFlatTransactionStep(
-                              protocolSchedule, null, Optional.of(filterParameter));
+                              getBlockchainQueries().getBlockchain(),
+                              protocolSchedule,
+                              null,
+                              Optional.of(filterParameter));
 
                   BuildArrayNodeCompleterStep buildArrayNodeStep =
                       new BuildArrayNodeCompleterStep(resultArrayNode);
@@ -248,7 +251,8 @@ public class TraceFilter extends TraceBlock {
           final List<Address> fromAddress = filterParameter.getFromAddress();
           if (fromAddress.isEmpty()) {
             final List<Address> toAddress = filterParameter.getToAddress();
-            RewardTraceGenerator.generateFromBlock(protocolSchedule, block)
+            RewardTraceGenerator.generateFromBlock(
+                    getBlockchainQueries().getBlockchain(), protocolSchedule, block)
                 .map(FlatTrace.class::cast)
                 .filter(trace -> trace.getBlockNumber() != 0)
                 .filter(

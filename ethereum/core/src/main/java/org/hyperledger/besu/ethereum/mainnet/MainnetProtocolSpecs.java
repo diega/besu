@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestPr
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -1013,8 +1014,13 @@ public abstract class MainnetProtocolSpecs {
 
     @Override
     public Wei getCoinbaseReward(
-        final Wei blockReward, final long blockNumber, final int numberOfOmmers) {
-      return wrapped.getCoinbaseReward(blockReward, blockNumber, numberOfOmmers);
+        final Blockchain blockchain,
+        final Wei blockReward,
+        final Hash parentHash,
+        final long blockNumber,
+        final int numberOfOmmers) {
+      return wrapped.getCoinbaseReward(
+          blockchain, blockReward, parentHash, blockNumber, numberOfOmmers);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

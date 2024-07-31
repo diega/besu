@@ -258,7 +258,9 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             .timestamp(1)
             .buildProcessableBlockHeader();
 
+    // TODO(diegoll): review nulls added here
     blockCreator.rewardBeneficiary(
+        null,
         mutableWorldState,
         header,
         Collections.emptyList(),
@@ -337,6 +339,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             .buildProcessableBlockHeader();
 
     blockCreator.rewardBeneficiary(
+        null,
         mutableWorldState,
         header,
         Collections.emptyList(),

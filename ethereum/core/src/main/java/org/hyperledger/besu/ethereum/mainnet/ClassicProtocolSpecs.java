@@ -429,6 +429,22 @@ public class ClassicProtocolSpecs {
                     evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
+        // ECIP-1559 forwarded fees
+        .blockProcessorBuilder(
+            (transactionProcessor,
+                transactionReceiptFactory,
+                blockReward,
+                miningBeneficiaryCalculator,
+                skipZeroBlockRewards,
+                protocolSchedule) ->
+                new ClassicECIP1559BlockProcessor(
+                    transactionProcessor,
+                    transactionReceiptFactory,
+                    blockReward,
+                    miningBeneficiaryCalculator,
+                    skipZeroBlockRewards,
+                    ecip1017EraRounds,
+                    protocolSchedule))
         // BASEFEE opcode
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->

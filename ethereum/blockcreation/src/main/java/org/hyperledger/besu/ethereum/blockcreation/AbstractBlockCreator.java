@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -260,6 +261,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       if (rewardCoinbase
           && !rewardBeneficiary(
+              protocolContext.getBlockchain(),
               disposableWorldState,
               processableBlockHeader,
               ommers,
@@ -471,6 +473,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   /* Copied from BlockProcessor (with modifications). */
   boolean rewardBeneficiary(
+      final Blockchain blockchain,
       final MutableWorldState worldState,
       final ProcessableBlockHeader header,
       final List<BlockHeader> ommers,
@@ -488,7 +491,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final Wei coinbaseReward =
         protocolSpec
             .getBlockProcessor()
-            .getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
+            .getCoinbaseReward(
+                blockchain, blockReward, header.getParentHash(), header.getNumber(), ommers.size());
     final WorldUpdater updater = worldState.updater();
     final MutableAccount beneficiary = updater.getOrCreate(miningBeneficiary);
 

@@ -133,7 +133,11 @@ public class TraceBlock extends AbstractBlockParameterMethod {
                       protocolSpec,
                       block);
               TraceFlatTransactionStep traceFlatTransactionStep =
-                  new TraceFlatTransactionStep(protocolSchedule, block, filterParameter);
+                  new TraceFlatTransactionStep(
+                      getBlockchainQueries().getBlockchain(),
+                      protocolSchedule,
+                      block,
+                      filterParameter);
               BuildArrayNodeCompleterStep buildArrayNodeStep =
                   new BuildArrayNodeCompleterStep(resultArrayNode);
               Pipeline<TransactionTrace> traceBlockPipeline =
@@ -188,7 +192,8 @@ public class TraceBlock extends AbstractBlockParameterMethod {
       final Optional<FilterParameter> maybeFilterParameter,
       final Block block,
       final ArrayNodeWrapper resultArrayNode) {
-    RewardTraceGenerator.generateFromBlock(protocolSchedule, block)
+    RewardTraceGenerator.generateFromBlock(
+            getBlockchainQueries().getBlockchain(), protocolSchedule, block)
         .forEachOrdered(resultArrayNode::addPOJO);
   }
 

@@ -95,20 +95,23 @@ public class RewardTraceGeneratorTest {
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 
     final Stream<Trace> traceStream =
-        RewardTraceGenerator.generateFromBlock(protocolSchedule, block);
+        RewardTraceGenerator.generateFromBlock(null, protocolSchedule, block);
 
+    BlockHeader blockHeader = block.getHeader();
+    // TODO(diegoll): review nulls added here
     final Action.Builder actionBlockReward =
         Action.builder()
             .rewardType("block")
             .author(blockBeneficiary.toHexString())
             .value(
                 blockProcessor
-                    .getCoinbaseReward(blockReward, block.getHeader().getNumber(), 1)
+                    .getCoinbaseReward(
+                        null, blockReward, blockHeader.getParentHash(), blockHeader.getNumber(), 1)
                     .toShortHexString());
     final Trace blocReward =
         new RewardTrace.Builder()
             .blockHash(block.getHash().toHexString())
-            .blockNumber(block.getHeader().getNumber())
+            .blockNumber(blockHeader.getNumber())
             .actionBuilder(actionBlockReward)
             .type("reward")
             .build();
@@ -120,13 +123,12 @@ public class RewardTraceGeneratorTest {
             .author(ommerBeneficiary.toHexString())
             .value(
                 blockProcessor
-                    .getOmmerReward(
-                        blockReward, block.getHeader().getNumber(), ommerHeader.getNumber())
+                    .getOmmerReward(blockReward, blockHeader.getNumber(), ommerHeader.getNumber())
                     .toShortHexString());
     final Trace ommerReward =
         new RewardTrace.Builder()
             .blockHash(block.getHash().toHexString())
-            .blockNumber(block.getHeader().getNumber())
+            .blockNumber(blockHeader.getNumber())
             .actionBuilder(actionOmmerReward)
             .type("reward")
             .build();
@@ -155,20 +157,22 @@ public class RewardTraceGeneratorTest {
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 
     final Stream<Trace> traceStream =
-        RewardTraceGenerator.generateFromBlock(protocolSchedule, block);
+        RewardTraceGenerator.generateFromBlock(null, protocolSchedule, block);
 
+    BlockHeader blockHeader = block.getHeader();
     final Action.Builder actionBlockReward =
         Action.builder()
             .rewardType("block")
             .author(blockBeneficiary.toHexString())
             .value(
                 blockProcessor
-                    .getCoinbaseReward(blockReward, block.getHeader().getNumber(), 1)
+                    .getCoinbaseReward(
+                        null, blockReward, blockHeader.getParentHash(), blockHeader.getNumber(), 1)
                     .toShortHexString());
     final Trace blocReward =
         new RewardTrace.Builder()
             .blockHash(block.getHash().toHexString())
-            .blockNumber(block.getHeader().getNumber())
+            .blockNumber(blockHeader.getNumber())
             .actionBuilder(actionBlockReward)
             .type("reward")
             .build();
@@ -180,13 +184,12 @@ public class RewardTraceGeneratorTest {
             .author(ommerBeneficiary.toHexString())
             .value(
                 blockProcessor
-                    .getOmmerReward(
-                        blockReward, block.getHeader().getNumber(), ommerHeader.getNumber())
+                    .getOmmerReward(blockReward, blockHeader.getNumber(), ommerHeader.getNumber())
                     .toShortHexString());
     final Trace ommerReward =
         new RewardTrace.Builder()
             .blockHash(block.getHash().toHexString())
-            .blockNumber(block.getHeader().getNumber())
+            .blockNumber(blockHeader.getNumber())
             .actionBuilder(actionOmmerReward)
             .type("reward")
             .build();

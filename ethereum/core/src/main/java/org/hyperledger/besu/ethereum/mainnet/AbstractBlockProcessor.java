@@ -224,7 +224,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     if (!(skipZeroBlockRewards && blockReward.isZero())) {
       try {
-        distributeRewards(worldState, blockHeader, ommers);
+        distributeRewards(blockchain, worldState, blockHeader, ommers);
       } catch (IllegalArgumentException e) {
         if (worldState instanceof BonsaiWorldState) {
           ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
@@ -308,6 +308,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   }
 
   protected void distributeRewards(
+      final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader header,
       final List<BlockHeader> ommers) {
@@ -329,7 +330,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       ommerCoinbase.incrementBalance(ommerReward);
     }
 
-    final Wei coinbaseReward = getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
+    final Wei coinbaseReward =
+        getCoinbaseReward(
+            blockchain, blockReward, header.getParentHash(), header.getNumber(), ommers.size());
     final Address miningBeneficiary = getMiningBeneficiaryCalculator().calculateBeneficiary(header);
     final MutableAccount miningBeneficiaryAccount = updater.getOrCreate(miningBeneficiary);
     miningBeneficiaryAccount.incrementBalance(coinbaseReward);

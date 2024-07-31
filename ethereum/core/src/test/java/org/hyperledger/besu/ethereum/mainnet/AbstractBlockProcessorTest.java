@@ -153,6 +153,7 @@ abstract class AbstractBlockProcessorTest {
 
     @Override
     public void distributeRewards(
+        final Blockchain blockchain,
         final MutableWorldState worldState,
         final BlockHeader header,
         final List<BlockHeader> ommers) {}
@@ -165,7 +166,11 @@ abstract class AbstractBlockProcessorTest {
 
     @Override
     public Wei getCoinbaseReward(
-        final Wei blockReward, final long blockNumber, final int numberOfOmmers) {
+        final Blockchain blockchain,
+        final Wei blockReward,
+        final Hash parentHash,
+        final long blockNumber,
+        final int numberOfOmmers) {
       throw new IllegalStateException("Not implemented");
     }
   }

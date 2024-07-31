@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 
 public class MainnetBlockProcessor extends AbstractBlockProcessor {
 
@@ -43,7 +45,11 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
 
   @Override
   public Wei getCoinbaseReward(
-      final Wei blockReward, final long blockNumber, final int numberOfOmmers) {
+      final Blockchain blockchain,
+      final Wei blockReward,
+      final Hash parentHash,
+      final long blockNumber,
+      final int numberOfOmmers) {
     return blockReward.add(blockReward.multiply(numberOfOmmers).divide(32));
   }
 }

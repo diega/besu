@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -159,10 +160,17 @@ public interface BlockProcessor {
   /**
    * Get coinbase reward in ${@link Wei}
    *
+   * @param blockchain blockchain state
    * @param blockReward reward of the block
+   * @param parentHash parent of the block
    * @param blockNumber number of the block
    * @param numberOfOmmers number of ommers for this block
    * @return coinbase reward
    */
-  Wei getCoinbaseReward(final Wei blockReward, final long blockNumber, final int numberOfOmmers);
+  Wei getCoinbaseReward(
+      final Blockchain blockchain,
+      final Wei blockReward,
+      final Hash parentHash,
+      final long blockNumber,
+      final int numberOfOmmers);
 }

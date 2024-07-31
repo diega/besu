@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 
 import java.math.BigInteger;
 import java.util.OptionalLong;
@@ -101,7 +103,11 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
 
   @Override
   public Wei getCoinbaseReward(
-      final Wei blockReward, final long blockNumber, final int ommersSize) {
+      final Blockchain blockchain,
+      final Wei blockReward,
+      final Hash parentHash,
+      final long blockNumber,
+      final int ommersSize) {
     final int blockEra = getBlockEra(blockNumber, eraLength);
     final Wei winnerReward = getBlockWinnerRewardByEra(blockEra);
     return winnerReward.plus(winnerReward.multiply(ommersSize).divide(32));
