@@ -311,12 +311,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final MutableWorldState worldState,
       final BlockHeader header,
       final List<BlockHeader> ommers) {
-    final Wei coinbaseReward = getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
     final WorldUpdater updater = worldState.updater();
-    final Address miningBeneficiary = getMiningBeneficiaryCalculator().calculateBeneficiary(header);
-    final MutableAccount miningBeneficiaryAccount = updater.getOrCreate(miningBeneficiary);
 
-    miningBeneficiaryAccount.incrementBalance(coinbaseReward);
     for (final BlockHeader ommerHeader : ommers) {
       if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
         LOG.info(
@@ -332,6 +328,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           getOmmerReward(blockReward, header.getNumber(), ommerHeader.getNumber());
       ommerCoinbase.incrementBalance(ommerReward);
     }
+
+    final Wei coinbaseReward = getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
+    final Address miningBeneficiary = getMiningBeneficiaryCalculator().calculateBeneficiary(header);
+    final MutableAccount miningBeneficiaryAccount = updater.getOrCreate(miningBeneficiary);
+    miningBeneficiaryAccount.incrementBalance(coinbaseReward);
+
     updater.commit();
   }
 
