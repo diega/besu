@@ -473,7 +473,7 @@ public class ProtocolScheduleBuilder {
             blockNumberMilestone(
                 HardforkId.ClassicHardforkId.SINISTER,
                 config.getSinisterBlockNumber(),
-                specFactory.sinisterDefinition()))
+                specFactory.sinisterDefinition(config)))
         .flatMap(Optional::stream)
         .toList();
   }

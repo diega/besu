@@ -367,13 +367,14 @@ public class MainnetProtocolSpecFactory {
         metricsSystem);
   }
 
-  public ProtocolSpecBuilder sinisterDefinition() {
+  public ProtocolSpecBuilder sinisterDefinition(final GenesisConfigOptions genesisConfigOptions) {
     return ClassicProtocolSpecs.sinisterDefinition(
         chainId,
         isRevertReasonEnabled,
         ecip1017EraRounds,
         evmConfiguration,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        genesisConfigOptions);
   }
 }

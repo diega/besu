@@ -16,11 +16,14 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHasher;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.ClassicEVMs;
 import org.hyperledger.besu.evm.MainnetEVMs;
@@ -376,13 +379,76 @@ public class ClassicProtocolSpecs {
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final GenesisConfigOptions genesisConfigOptions) {
+    final long sinisterForkBlockNumber =
+        genesisConfigOptions.getSinisterBlockNumber().orElse(Long.MAX_VALUE);
+    final BaseFeeMarket sinisterFeeMarket = FeeMarket.london(sinisterForkBlockNumber);
     return spiralDefinition(
-        chainId,
-        enableRevertReason,
-        ecip1017EraRounds,
-        evmConfiguration,
-        isParallelTxProcessingEnabled,
-        metricsSystem);
+            chainId,
+            enableRevertReason,
+            ecip1017EraRounds,
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
+        // EIP-1559 fee market
+        .feeMarket(sinisterFeeMarket)
+        // next block gas limit
+        .gasLimitCalculatorBuilder(
+            feeMarket ->
+                new LondonTargetingGasLimitCalculator(
+                    sinisterForkBlockNumber, (BaseFeeMarket) feeMarket))
+        // EIP-1559 transaction type support
+        .transactionValidatorFactoryBuilder(
+            (evm, gasLimitCalculator, feeMarket) ->
+                new TransactionValidatorFactory(
+                    evm.getGasCalculator(),
+                    gasLimitCalculator,
+                    feeMarket,
+                    true,
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559),
+                    Integer.MAX_VALUE))
+        // EIP-1559 tx fee distribution
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                feeMarket,
+                transactionValidatorFactory,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidatorFactory,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    false,
+                    evmConfiguration.evmStackSize(),
+                    feeMarket,
+                    CoinbaseFeePriceCalculator.eip1559()))
+        // BASEFEE opcode
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                ClassicEVMs.sinister(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        // new block header validation
+        .blockBodyValidatorBuilder(BaseFeeBlockBodyValidator::new)
+        // validate block header base fee header presence
+        .blockHeaderValidatorBuilder(
+            feeMarket ->
+                MainnetBlockHeaderValidator.createPgaBlockHeaderValidator(
+                    new EpochCalculator.Ecip1099EpochCalculator(),
+                    powHasher(PowAlgorithm.ETHASH),
+                    feeMarket))
+        .ommerHeaderValidatorBuilder(
+            feeMarket ->
+                MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
+                    new EpochCalculator.Ecip1099EpochCalculator(),
+                    powHasher(PowAlgorithm.ETHASH),
+                    feeMarket))
+        .name("Sinister");
   }
 }

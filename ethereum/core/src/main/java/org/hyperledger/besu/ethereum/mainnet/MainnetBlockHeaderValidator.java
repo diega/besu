@@ -92,19 +92,27 @@ public final class MainnetBlockHeaderValidator {
 
   static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator() {
     return createLegacyFeeMarketOmmerValidator(
-        new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
+        new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT, null);
   }
 
   static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator(
       final EpochCalculator epochCalculator, final PoWHasher hasher) {
+    return createLegacyFeeMarketOmmerValidator(epochCalculator, hasher, null);
+  }
+
+  static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator(
+      final EpochCalculator epochCalculator, final PoWHasher hasher, final FeeMarket feeMarket) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
-        .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, MAX_GAS_LIMIT))
+        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(
+                MIN_GAS_LIMIT, MAX_GAS_LIMIT, Optional.ofNullable((BaseFeeMarket) feeMarket)))
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-        .addRule(new ProofOfWorkValidationRule(epochCalculator, hasher, Optional.empty()));
+        .addRule(
+            new ProofOfWorkValidationRule(epochCalculator, hasher, Optional.ofNullable(feeMarket)));
   }
 
   private static BlockHeaderValidator.Builder createPgaFeeMarketValidator() {
@@ -117,15 +125,23 @@ public final class MainnetBlockHeaderValidator {
 
   public static BlockHeaderValidator.Builder createPgaBlockHeaderValidator(
       final EpochCalculator epochCalculator, final PoWHasher hasher) {
+    return createPgaBlockHeaderValidator(epochCalculator, hasher, null);
+  }
+
+  public static BlockHeaderValidator.Builder createPgaBlockHeaderValidator(
+      final EpochCalculator epochCalculator, final PoWHasher hasher, final FeeMarket feeMarket) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
         .addRule(new AncestryValidationRule())
-        .addRule(new GasLimitRangeAndDeltaValidationRule(MIN_GAS_LIMIT, MAX_GAS_LIMIT))
+        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(
+                MIN_GAS_LIMIT, MAX_GAS_LIMIT, Optional.ofNullable((BaseFeeMarket) feeMarket)))
         .addRule(new GasUsageValidationRule())
         .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
         .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-        .addRule(new ProofOfWorkValidationRule(epochCalculator, hasher, Optional.empty()));
+        .addRule(
+            new ProofOfWorkValidationRule(epochCalculator, hasher, Optional.ofNullable(feeMarket)));
   }
 
   public static BlockHeaderValidator.Builder createBaseFeeMarketValidator(

@@ -19,6 +19,7 @@ import static org.hyperledger.besu.evm.MainnetEVMs.registerIstanbulOperations;
 
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.operation.BaseFeeOperation;
 import org.hyperledger.besu.evm.operation.Create2Operation;
 import org.hyperledger.besu.evm.operation.CreateOperation;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
@@ -51,6 +52,25 @@ public class ClassicEVMs {
   }
 
   /**
+   * sinister evm
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM sinister(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        sinisterOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.SHANGHAI);
+  }
+
+  /**
    * spiral operations' registry.
    *
    * @param gasCalculator the gas calculator
@@ -65,5 +85,19 @@ public class ClassicEVMs {
     registry.put(new CreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
     registry.put(new Create2Operation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
     return registry;
+  }
+
+  /**
+   * sinister operations' registry
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  private static OperationRegistry sinisterOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry spiralRegistry = spiralOperations(gasCalculator, chainId);
+    spiralRegistry.put(new BaseFeeOperation(gasCalculator));
+    return spiralRegistry;
   }
 }
