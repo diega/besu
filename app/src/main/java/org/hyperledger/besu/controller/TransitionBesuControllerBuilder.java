@@ -26,6 +26,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinatorFactoryRegistry;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
@@ -409,6 +410,13 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final DataStorageConfiguration dataStorageConfiguration) {
     super.dataStorageConfiguration(dataStorageConfiguration);
     return propagateConfig(z -> z.dataStorageConfiguration(dataStorageConfiguration));
+  }
+
+  @Override
+  public BesuControllerBuilder miningCoordinatorFactoryRegistry(
+      final MiningCoordinatorFactoryRegistry registry) {
+    super.miningCoordinatorFactoryRegistry(registry);
+    return propagateConfig(z -> z.miningCoordinatorFactoryRegistry(registry));
   }
 
   private BesuControllerBuilder propagateConfig(final Consumer<BesuControllerBuilder> toPropagate) {

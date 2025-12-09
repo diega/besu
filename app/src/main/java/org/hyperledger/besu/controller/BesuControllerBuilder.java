@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinatorFactoryRegistry;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
@@ -229,6 +230,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** The global code cache */
   protected CodeCache codeCache;
+
+  /** The mining coordinator factory registry */
+  protected MiningCoordinatorFactoryRegistry miningCoordinatorFactoryRegistry;
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -585,6 +589,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    */
   public BesuControllerBuilder isEarlyRoundChangeEnabled(final boolean isEarlyRoundChangeEnabled) {
     this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
+    return this;
+  }
+
+  /**
+   * Sets the mining coordinator factory registry.
+   *
+   * @param registry the mining coordinator factory registry
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder miningCoordinatorFactoryRegistry(
+      final MiningCoordinatorFactoryRegistry registry) {
+    this.miningCoordinatorFactoryRegistry = registry;
     return this;
   }
 

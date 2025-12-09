@@ -14,29 +14,25 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMinerExecutor;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinatorContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.time.Clock;
 import java.util.Optional;
 
 /** The Mainnet besu controller builder. */
 public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
-
-  private EpochCalculator epochCalculator = new EpochCalculator.DefaultEpochCalculator();
 
   /** Default constructor. */
   public MainnetBesuControllerBuilder() {}
@@ -50,32 +46,65 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
 
-    final PoWMinerExecutor executor =
-        new PoWMinerExecutor(
-            protocolContext,
+    final MiningCoordinatorContext context =
+        createMiningCoordinatorContext(
             protocolSchedule,
+            protocolContext,
             transactionPool,
             miningConfiguration,
-            new DefaultBlockScheduler(
-                MainnetBlockHeaderValidator.MINIMUM_SECONDS_SINCE_PARENT,
-                MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S,
-                clock),
-            epochCalculator,
-            ethProtocolManager.ethContext().getScheduler());
-
-    final PoWMiningCoordinator miningCoordinator =
-        new PoWMiningCoordinator(
-            protocolContext.getBlockchain(),
-            executor,
             syncState,
-            miningConfiguration.getUnstable().getRemoteSealersLimit(),
-            miningConfiguration.getUnstable().getRemoteSealersTimeToLive());
-    miningCoordinator.addMinedBlockObserver(ethProtocolManager);
-    if (miningConfiguration.isMiningEnabled()) {
-      miningCoordinator.enable();
-    }
+            ethProtocolManager);
+    return miningCoordinatorFactoryRegistry.createCoordinator(context);
+  }
 
-    return miningCoordinator;
+  private MiningCoordinatorContext createMiningCoordinatorContext(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final TransactionPool transactionPool,
+      final MiningConfiguration miningConfiguration,
+      final SyncState syncState,
+      final EthProtocolManager ethProtocolManager) {
+    return new MiningCoordinatorContext() {
+      @Override
+      public ProtocolSchedule getProtocolSchedule() {
+        return protocolSchedule;
+      }
+
+      @Override
+      public ProtocolContext getProtocolContext() {
+        return protocolContext;
+      }
+
+      @Override
+      public TransactionPool getTransactionPool() {
+        return transactionPool;
+      }
+
+      @Override
+      public MiningConfiguration getMiningConfiguration() {
+        return miningConfiguration;
+      }
+
+      @Override
+      public SyncState getSyncState() {
+        return syncState;
+      }
+
+      @Override
+      public EthProtocolManager getEthProtocolManager() {
+        return ethProtocolManager;
+      }
+
+      @Override
+      public GenesisConfigOptions getGenesisConfigOptions() {
+        return genesisConfigOptions;
+      }
+
+      @Override
+      public Clock getClock() {
+        return clock;
+      }
+    };
   }
 
   @Override
@@ -103,13 +132,5 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         isParallelTxProcessingEnabled,
         balConfiguration,
         metricsSystem);
-  }
-
-  @Override
-  protected void prepForBuild() {
-    genesisConfigOptions
-        .getThanosBlockNumber()
-        .ifPresent(
-            activationBlock -> epochCalculator = new EpochCalculator.Ecip1099EpochCalculator());
   }
 }

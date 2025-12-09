@@ -115,6 +115,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinatorFactoryRegistry;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParametersMetrics;
@@ -185,6 +186,7 @@ import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockSimulatorServiceImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
+import org.hyperledger.besu.services.MiningCoordinatorFactoryRegistryImpl;
 import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.P2PServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
@@ -336,6 +338,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final SecurityModuleServiceImpl securityModuleService;
   private final PermissioningServiceImpl permissioningService;
   private final RpcEndpointServiceImpl rpcEndpointServiceImpl;
+  private final MiningCoordinatorFactoryRegistryImpl miningCoordinatorFactoryRegistry;
 
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
@@ -695,6 +698,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new SecurityModuleServiceImpl(),
         new PermissioningServiceImpl(),
         new RpcEndpointServiceImpl(),
+        new MiningCoordinatorFactoryRegistryImpl(),
         new TransactionSelectionServiceImpl(),
         new TransactionPoolValidatorServiceImpl(),
         new TransactionSimulationServiceImpl(),
@@ -719,6 +723,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param securityModuleService instance of SecurityModuleServiceImpl
    * @param permissioningService instance of PermissioningServiceImpl
    * @param rpcEndpointServiceImpl instance of RpcEndpointServiceImpl
+   * @param miningCoordinatorFactoryRegistry instance of MiningCoordinatorFactoryRegistryImpl
    * @param transactionSelectionServiceImpl instance of TransactionSelectionServiceImpl
    * @param transactionPoolValidatorServiceImpl instance of TransactionPoolValidatorServiceImpl
    * @param transactionSimulationServiceImpl instance of TransactionSimulationServiceImpl
@@ -741,6 +746,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final SecurityModuleServiceImpl securityModuleService,
       final PermissioningServiceImpl permissioningService,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
+      final MiningCoordinatorFactoryRegistryImpl miningCoordinatorFactoryRegistry,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
       final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl,
       final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
@@ -769,6 +775,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       besuPluginContext.addService(BesuConfiguration.class, this.pluginCommonConfiguration);
     }
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
+    this.miningCoordinatorFactoryRegistry = miningCoordinatorFactoryRegistry;
     this.transactionSelectionServiceImpl = transactionSelectionServiceImpl;
     this.transactionPoolValidatorServiceImpl = transactionPoolValidatorServiceImpl;
     this.transactionSimulationServiceImpl = transactionSimulationServiceImpl;
@@ -1192,6 +1199,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(MetricCategoryRegistry.class, metricCategoryRegistry);
     besuPluginContext.addService(PermissioningService.class, permissioningService);
     besuPluginContext.addService(RpcEndpointService.class, rpcEndpointServiceImpl);
+    besuPluginContext.addService(
+        MiningCoordinatorFactoryRegistry.class, miningCoordinatorFactoryRegistry);
     besuPluginContext.addService(
         TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
@@ -1829,6 +1838,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .dataDirectory(dataDir())
             .dataStorageConfiguration(getDataStorageConfiguration())
             .miningParameters(miningParametersSupplier.get())
+            .miningCoordinatorFactoryRegistry(miningCoordinatorFactoryRegistry)
             .transactionPoolConfiguration(buildTransactionPoolConfiguration())
             .nodeKey(new NodeKey(securityModule()))
             .metricsSystem((ObservableMetricsSystem) besuComponent.getMetricsSystem())
