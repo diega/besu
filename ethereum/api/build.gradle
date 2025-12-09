@@ -96,6 +96,7 @@ dependencies {
   testImplementation project(':testutil')
 
   testResourceGeneration project(':app')
+  testResourceGeneration project(':plugins:classic')
 
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'io.vertx:vertx-auth-jwt'

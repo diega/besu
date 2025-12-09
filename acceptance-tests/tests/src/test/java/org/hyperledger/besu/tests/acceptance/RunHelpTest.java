@@ -33,10 +33,9 @@ public class RunHelpTest extends AcceptanceTestBase {
     cluster.runNodeStart(node);
     WaitUtils.waitFor(5000, () -> node.verify(exitedSuccessfully));
 
-    // assert that no random startup or ending logging appears.
-    // if the help text changes then updates are appropriate.
+    // assert that the help text is present and correct.
+    // Plugin registration logs may appear before the help text.
     final String consoleContents = cluster.getConsoleContents();
-    assertThat(consoleContents)
-        .startsWith("Usage:\n\nbesu [OPTIONS] [COMMAND]\n\nDescription:\n\n");
+    assertThat(consoleContents).contains("Usage:\n\nbesu [OPTIONS] [COMMAND]\n\nDescription:\n\n");
   }
 }

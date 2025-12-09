@@ -12,9 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.blockcreation;
+package org.hyperledger.besu.plugin.classic.mining;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.blockcreation.AbstractMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
