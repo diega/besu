@@ -31,10 +31,14 @@ public class PoWMiningCoordinatorCreator {
 
   private static final long MINIMUM_SECONDS_SINCE_PARENT = 1L;
   private static final long TIMESTAMP_TOLERANCE_S = 15L;
-  private static final int DEFAULT_REMOTE_SEALERS_LIMIT = 1000;
-  private static final long DEFAULT_REMOTE_SEALERS_TTL = 10L;
 
-  public static MiningCoordinator create(final MiningCoordinatorContext context) {
+  private final PoWMiningCLIOptions cliOptions;
+
+  public PoWMiningCoordinatorCreator(final PoWMiningCLIOptions cliOptions) {
+    this.cliOptions = cliOptions;
+  }
+
+  public MiningCoordinator create(final MiningCoordinatorContext context) {
     LOG.info("Creating PoW mining coordinator");
 
     final EpochCalculator epochCalculator =
@@ -52,15 +56,17 @@ public class PoWMiningCoordinatorCreator {
             context.getMiningConfiguration(),
             blockScheduler,
             epochCalculator,
-            context.getEthProtocolManager().ethContext().getScheduler());
+            context.getEthProtocolManager().ethContext().getScheduler(),
+            cliOptions.getPowJobTimeToLive(),
+            cliOptions.getMaxOmmersDepth());
 
     final PoWMiningCoordinator coordinator =
         new PoWMiningCoordinator(
             context.getProtocolContext().getBlockchain(),
             executor,
             context.getSyncState(),
-            DEFAULT_REMOTE_SEALERS_LIMIT,
-            DEFAULT_REMOTE_SEALERS_TTL);
+            cliOptions.getRemoteSealersLimit(),
+            cliOptions.getRemoteSealersTimeToLive());
 
     coordinator.addMinedBlockObserver(context.getEthProtocolManager());
 

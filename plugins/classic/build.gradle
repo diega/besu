@@ -41,6 +41,7 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.consensys.tuweni:tuweni-concurrent'
   implementation 'io.consensys.tuweni:tuweni-units'
+  implementation 'info.picocli:picocli'
 
   annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
   implementation 'com.google.auto.service:auto-service-annotations:1.1.1'

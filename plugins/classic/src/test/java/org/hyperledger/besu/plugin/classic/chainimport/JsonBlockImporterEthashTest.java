@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCacheModule
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.classic.PoWMiningCLIOptions;
 import org.hyperledger.besu.plugin.classic.PoWMiningCoordinatorCreator;
 import org.hyperledger.besu.services.MiningCoordinatorFactoryRegistryImpl;
 import org.hyperledger.besu.testutil.TestClock;
@@ -87,7 +88,9 @@ public class JsonBlockImporterEthashTest {
 
     // Register the PoW mining coordinator factory
     miningCoordinatorFactoryRegistry = new MiningCoordinatorFactoryRegistryImpl();
-    miningCoordinatorFactoryRegistry.registerCreator(PoWMiningCoordinatorCreator::create);
+    final PoWMiningCoordinatorCreator creator =
+        new PoWMiningCoordinatorCreator(PoWMiningCLIOptions.create());
+    miningCoordinatorFactoryRegistry.registerCreator(creator::create);
   }
 
   @Test

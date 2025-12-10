@@ -39,6 +39,8 @@ public class PoWSolver {
   private static final Logger LOG = LoggerFactory.getLogger(PoWSolver.class);
 
   private final MiningConfiguration miningConfiguration;
+  private final long powJobTimeToLive;
+  private final int maxOmmersDepth;
 
   public static class PoWSolverJob {
 
@@ -91,20 +93,22 @@ public class PoWSolver {
       final MiningConfiguration miningConfiguration,
       final PoWHasher poWHasher,
       final Subscribers<PoWObserver> ethHashObservers,
-      final EpochCalculator epochCalculator) {
+      final EpochCalculator epochCalculator,
+      final long powJobTimeToLive,
+      final int maxOmmersDepth) {
     this.miningConfiguration = miningConfiguration;
     this.poWHasher = poWHasher;
     ethHashObservers.forEach(observer -> observer.setSubmitWorkCallback(this::submitSolution));
     this.epochCalculator = epochCalculator;
+    this.powJobTimeToLive = powJobTimeToLive;
+    this.maxOmmersDepth = maxOmmersDepth;
   }
 
   public PoWSolution solveFor(final PoWSolverJob job)
       throws InterruptedException, ExecutionException {
     currentJob = Optional.of(job);
     currentJobs.put(
-        job.getInputs().getPrePowHash(),
-        job,
-        System.currentTimeMillis() + miningConfiguration.getUnstable().getPowJobTimeToLive());
+        job.getInputs().getPrePowHash(), job, System.currentTimeMillis() + powJobTimeToLive);
     LOG.debug("solving with cpu miner");
     findValidNonce();
     return job.getSolution();
@@ -174,7 +178,7 @@ public class PoWSolver {
             solution.getPowHash(),
             ommerCandidate.getInputs().getBlockNumber(),
             distanceToHead);
-        if (distanceToHead <= miningConfiguration.getUnstable().getMaxOmmerDepth()) {
+        if (distanceToHead <= maxOmmersDepth) {
           jobToTestWith = ommerCandidate;
         } else {
           LOG.debug("Discarded ommer solution as too far from head {}", distanceToHead);

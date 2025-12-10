@@ -17,6 +17,7 @@ package org.hyperledger.besu.plugin.classic;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinatorFactoryRegistry;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
 import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
@@ -26,16 +27,36 @@ import org.slf4j.LoggerFactory;
 public class ClassicMiningPlugin implements BesuPlugin {
 
   private static final Logger LOG = LoggerFactory.getLogger(ClassicMiningPlugin.class);
+  private static final String PLUGIN_NAME = "classic";
+
+  private final PoWMiningCLIOptions cliOptions;
+
+  public ClassicMiningPlugin() {
+    this.cliOptions = PoWMiningCLIOptions.create();
+  }
 
   @Override
   public void register(final ServiceManager context) {
     LOG.debug("Registering Classic Mining Plugin");
 
+    // Register CLI options
+    context
+        .getService(PicoCLIOptions.class)
+        .ifPresentOrElse(
+            picoCLIOptions -> {
+              picoCLIOptions.addPicoCLIOptions(PLUGIN_NAME, cliOptions);
+              LOG.debug("Classic plugin CLI options registered");
+            },
+            () -> LOG.warn("PicoCLIOptions service not available"));
+
+    // Register mining coordinator creator
     context
         .getService(MiningCoordinatorFactoryRegistry.class)
         .ifPresentOrElse(
             registry -> {
-              registry.registerCreator(PoWMiningCoordinatorCreator::create);
+              final PoWMiningCoordinatorCreator creator =
+                  new PoWMiningCoordinatorCreator(cliOptions);
+              registry.registerCreator(creator::create);
               LOG.debug("PoW mining coordinator creator registered");
             },
             () -> LOG.warn("MiningCoordinatorFactoryRegistry not available"));
@@ -44,6 +65,7 @@ public class ClassicMiningPlugin implements BesuPlugin {
   @Override
   public void start() {
     LOG.debug("Starting Classic Mining Plugin");
+    LOG.trace("Applied configuration: {}", cliOptions);
   }
 
   @Override

@@ -15,8 +15,8 @@
 package org.hyperledger.besu.plugin.classic.mining;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_REMOTE_SEALERS_LIMIT;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_REMOTE_SEALERS_TTL;
+import static org.hyperledger.besu.plugin.classic.PoWMiningCLIOptions.DEFAULT_REMOTE_SEALERS_LIMIT;
+import static org.hyperledger.besu.plugin.classic.PoWMiningCLIOptions.DEFAULT_REMOTE_SEALERS_TTL;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.classic.PoWMiningCLIOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
@@ -65,7 +66,9 @@ public class PoWMinerExecutorTest {
             miningConfiguration,
             new DefaultBlockScheduler(1L, 10, TestClock.fixed()),
             new EpochCalculator.DefaultEpochCalculator(),
-            ethScheduler);
+            ethScheduler,
+            PoWMiningCLIOptions.DEFAULT_POW_JOB_TTL,
+            PoWMiningCLIOptions.DEFAULT_MAX_OMMERS_DEPTH);
 
     assertThatExceptionOfType(CoinbaseNotSetException.class)
         .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), Subscribers.none(), null))
@@ -86,7 +89,9 @@ public class PoWMinerExecutorTest {
             miningConfiguration,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
             new EpochCalculator.DefaultEpochCalculator(),
-            ethScheduler);
+            ethScheduler,
+            PoWMiningCLIOptions.DEFAULT_POW_JOB_TTL,
+            PoWMiningCLIOptions.DEFAULT_MAX_OMMERS_DEPTH);
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> executor.setCoinbase(null))

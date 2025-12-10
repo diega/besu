@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
+import org.hyperledger.besu.plugin.classic.PoWMiningCLIOptions;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Arrays;
@@ -53,10 +54,12 @@ public class PoWSolverTest {
     final List<Long> noncesToTry = Arrays.asList(1L, 1L, 1L, 1L, 1L, 1L, 0L);
     final PoWSolver solver =
         new PoWSolver(
-            createMiningParameters(noncesToTry, 1000, 8),
+            createMiningParameters(noncesToTry),
             PoWHasher.ETHASH_LIGHT,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            PoWMiningCLIOptions.DEFAULT_POW_JOB_TTL,
+            PoWMiningCLIOptions.DEFAULT_MAX_OMMERS_DEPTH);
 
     assertThat(solver.hashesPerSecond()).isEqualTo(Optional.empty());
     assertThat(solver.getWorkDefinition()).isEqualTo(Optional.empty());
@@ -85,10 +88,12 @@ public class PoWSolverTest {
 
     final PoWSolver solver =
         new PoWSolver(
-            createMiningParameters(noncesToTry, 1000, 8),
+            createMiningParameters(noncesToTry),
             hasher,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            PoWMiningCLIOptions.DEFAULT_POW_JOB_TTL,
+            PoWMiningCLIOptions.DEFAULT_MAX_OMMERS_DEPTH);
 
     final Stopwatch operationTimer = Stopwatch.createStarted();
     final PoWSolverInputs inputs = new PoWSolverInputs(UInt256.ONE, Bytes.EMPTY, 5);
@@ -151,12 +156,12 @@ public class PoWSolverTest {
         new PoWSolver(
             createMiningParameters(
                 Lists.newArrayList(
-                    expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce()),
-                1000,
-                8),
+                    expectedFirstOutput.getNonce(), 0L, expectedSecondOutput.getNonce())),
             PoWHasher.ETHASH_LIGHT,
             Subscribers.none(),
-            new EpochCalculator.DefaultEpochCalculator());
+            new EpochCalculator.DefaultEpochCalculator(),
+            PoWMiningCLIOptions.DEFAULT_POW_JOB_TTL,
+            PoWMiningCLIOptions.DEFAULT_MAX_OMMERS_DEPTH);
 
     PoWSolution soln = solver.solveFor(PoWSolver.PoWSolverJob.createFromInputs(firstInputs));
     assertThat(soln.getMixHash()).isEqualTo(expectedFirstOutput.getMixHash());
@@ -165,15 +170,9 @@ public class PoWSolverTest {
     assertThat(soln.getMixHash()).isEqualTo(expectedSecondOutput.getMixHash());
   }
 
-  private MiningConfiguration createMiningParameters(
-      final List<Long> nonceToTry, final int powJobTimeToLive, final int maxOmmerDepth) {
+  private MiningConfiguration createMiningParameters(final List<Long> nonceToTry) {
     return ImmutableMiningConfiguration.builder()
         .mutableInitValues(MutableInitValues.builder().nonceGenerator(nonceToTry).build())
-        .unstable(
-            ImmutableMiningConfiguration.Unstable.builder()
-                .maxOmmerDepth(maxOmmerDepth)
-                .powJobTimeToLive(powJobTimeToLive)
-                .build())
         .build();
   }
 }
