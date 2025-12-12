@@ -84,6 +84,7 @@ import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.MiningCoordinatorFactoryRegistryImpl;
+import org.hyperledger.besu.services.NetworkProviderRegistryImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
@@ -626,6 +627,7 @@ public abstract class CommandTestAbstract {
           new PermissioningServiceImpl(),
           rpcEndpointServiceImpl,
           new MiningCoordinatorFactoryRegistryImpl(),
+          new NetworkProviderRegistryImpl(),
           new TransactionSelectionServiceImpl(),
           new TransactionPoolValidatorServiceImpl(),
           new TransactionSimulationServiceImpl(),
