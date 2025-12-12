@@ -47,11 +47,7 @@ public enum NetworkName {
   /** Future EIPs network name. */
   FUTURE_EIPS("/future.json", BigInteger.valueOf(2022), false),
   /** Experimental EIPs network name. */
-  EXPERIMENTAL_EIPS("/experimental.json", BigInteger.valueOf(2023), false),
-  /** Classic network name. */
-  CLASSIC("/classic.json", BigInteger.valueOf(1)),
-  /** Mordor network name. */
-  MORDOR("/mordor.json", BigInteger.valueOf(7));
+  EXPERIMENTAL_EIPS("/experimental.json", BigInteger.valueOf(2023), false);
 
   private final String genesisFile;
   private final BigInteger networkId;

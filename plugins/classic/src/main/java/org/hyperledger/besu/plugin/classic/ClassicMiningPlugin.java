@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinatorFactoryRegis
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.network.NetworkProviderRegistry;
 
 import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
@@ -60,6 +61,16 @@ public class ClassicMiningPlugin implements BesuPlugin {
               LOG.debug("PoW mining coordinator creator registered");
             },
             () -> LOG.warn("MiningCoordinatorFactoryRegistry not available"));
+
+    // Register Classic network provider
+    context
+        .getService(NetworkProviderRegistry.class)
+        .ifPresentOrElse(
+            registry -> {
+              registry.registerProvider(new ClassicNetworkProvider());
+              LOG.debug("Classic network provider registered (classic, mordor)");
+            },
+            () -> LOG.warn("NetworkProviderRegistry not available"));
   }
 
   @Override
