@@ -1106,4 +1106,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     this.transitions = transitions;
     return this;
   }
+
+  @Override
+  public Map<String, Object> getRawConfigMap() {
+    return Collections.emptyMap();
+  }
 }

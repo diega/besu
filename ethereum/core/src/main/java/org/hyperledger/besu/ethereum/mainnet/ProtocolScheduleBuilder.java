@@ -26,6 +26,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -52,6 +53,7 @@ public class ProtocolScheduleBuilder {
   private final BalConfiguration balConfiguration;
   private final MetricsSystem metricsSystem;
   private final MiningConfiguration miningConfiguration;
+  private final List<ProtocolSpecProvider> protocolSpecProviders;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -64,6 +66,32 @@ public class ProtocolScheduleBuilder {
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
+    this(
+        config,
+        defaultChainId,
+        protocolSpecAdapters,
+        isRevertReasonEnabled,
+        evmConfiguration,
+        miningConfiguration,
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        balConfiguration,
+        metricsSystem,
+        Collections.emptyList());
+  }
+
+  public ProtocolScheduleBuilder(
+      final GenesisConfigOptions config,
+      final Optional<BigInteger> defaultChainId,
+      final ProtocolSpecAdapters protocolSpecAdapters,
+      final boolean isRevertReasonEnabled,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem,
+      final List<ProtocolSpecProvider> protocolSpecProviders) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
@@ -74,6 +102,7 @@ public class ProtocolScheduleBuilder {
     this.balConfiguration = balConfiguration;
     this.metricsSystem = metricsSystem;
     this.miningConfiguration = miningConfiguration;
+    this.protocolSpecProviders = protocolSpecProviders;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -229,11 +258,34 @@ public class ProtocolScheduleBuilder {
   }
 
   private List<BuilderMapEntry> createMilestones(final MainnetProtocolSpecFactory specFactory) {
+    final Optional<BigInteger> chainId = config.getChainId();
 
+    // Create and populate registry with Mainnet milestones
+    MilestoneRegistry registry =
+        MilestoneDefinitions.createMilestoneRegistry(
+            specFactory,
+            config,
+            evmConfiguration,
+            metricsSystem,
+            balConfiguration,
+            isParallelTxProcessingEnabled,
+            chainId);
+
+    // Allow plugins to register additional milestones
+    for (ProtocolSpecProvider provider : protocolSpecProviders) {
+      if (provider.supports(chainId)) {
+        LOG.debug(
+            "Calling ProtocolSpecProvider {} for chain {}",
+            provider.getClass().getName(),
+            chainId.orElse(null));
+        provider.registerMilestones(registry);
+      }
+    }
+
+    // Validate fork order and create builder entries
     long lastForkBlock = 0;
     List<Optional<BuilderMapEntry>> milestones = new ArrayList<>();
-    for (MilestoneDefinition milestone :
-        MilestoneDefinitions.createMilestoneDefinitions(specFactory, config)) {
+    for (MilestoneDefinition milestone : registry.getMilestones()) {
       if (milestone.blockNumberOrTimestamp().isPresent()) {
         long thisForkBlock = milestone.blockNumberOrTimestamp().getAsLong();
         validateForkOrder(

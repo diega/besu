@@ -31,6 +31,7 @@ import java.util.OptionalLong;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -721,6 +722,19 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
         .distinct()
         .sorted()
         .toList();
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public Map<String, Object> getRawConfigMap() {
+    if (configRoot == null) {
+      return emptyMap();
+    }
+    try {
+      return new ObjectMapper().convertValue(configRoot, Map.class);
+    } catch (final IllegalArgumentException e) {
+      return emptyMap();
+    }
   }
 
   @Override

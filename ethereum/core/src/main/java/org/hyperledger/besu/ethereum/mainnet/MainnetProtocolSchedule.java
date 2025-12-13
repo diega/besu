@@ -23,6 +23,8 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -54,6 +56,43 @@ public class MainnetProtocolSchedule {
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
+    return fromConfig(
+        config,
+        isRevertReasonEnabled,
+        evmConfiguration,
+        miningConfiguration,
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        balConfiguration,
+        metricsSystem,
+        Collections.emptyList());
+  }
+
+  /**
+   * Create a Mainnet protocol schedule from a config object with custom protocol spec providers.
+   *
+   * @param config {@link GenesisConfigOptions} containing the config options for the milestone
+   *     starting points
+   * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
+   * @param evmConfiguration how to configure the EVMs jumpdest cache
+   * @param miningConfiguration the mining parameters
+   * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
+   * @param balConfiguration configuration related to block access lists
+   * @param metricsSystem A metricSystem instance to expose metrics in the underlying calls
+   * @param protocolSpecProviders list of custom protocol spec providers from plugins
+   * @return A configured mainnet protocol schedule
+   */
+  public static ProtocolSchedule fromConfig(
+      final GenesisConfigOptions config,
+      final Optional<Boolean> isRevertReasonEnabled,
+      final Optional<EvmConfiguration> evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem,
+      final List<ProtocolSpecProvider> protocolSpecProviders) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
           config,
@@ -75,7 +114,8 @@ public class MainnetProtocolSchedule {
             badBlockManager,
             isParallelTxProcessingEnabled,
             balConfiguration,
-            metricsSystem)
+            metricsSystem,
+            protocolSpecProviders)
         .createProtocolSchedule();
   }
 

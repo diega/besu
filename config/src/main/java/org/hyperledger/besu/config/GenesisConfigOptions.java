@@ -611,4 +611,12 @@ public interface GenesisConfigOptions {
    * @return the blob schedule
    */
   Optional<BlobScheduleOptions> getBlobScheduleOptions();
+
+  /**
+   * Gets the raw configuration root as a map. This allows plugins to read custom configuration
+   * fields that are not part of the standard interface. The map keys are case-insensitive.
+   *
+   * @return a map representing the raw configuration, or an empty map if not available
+   */
+  Map<String, Object> getRawConfigMap();
 }

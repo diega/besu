@@ -82,6 +82,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecProviderRegistry;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -233,6 +234,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** The mining coordinator factory registry */
   protected MiningCoordinatorFactoryRegistry miningCoordinatorFactoryRegistry;
+
+  /** The protocol spec provider registry */
+  protected ProtocolSpecProviderRegistry protocolSpecProviderRegistry;
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -601,6 +605,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   public BesuControllerBuilder miningCoordinatorFactoryRegistry(
       final MiningCoordinatorFactoryRegistry registry) {
     this.miningCoordinatorFactoryRegistry = registry;
+    return this;
+  }
+
+  /**
+   * Sets the protocol spec provider registry.
+   *
+   * @param registry the protocol spec provider registry
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder protocolSpecProviderRegistry(
+      final ProtocolSpecProviderRegistry registry) {
+    this.protocolSpecProviderRegistry = registry;
     return this;
   }
 

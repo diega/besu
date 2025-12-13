@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.time.Clock;
+import java.util.Collections;
 import java.util.Optional;
 
 /** The Mainnet besu controller builder. */
@@ -131,6 +132,9 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         badBlockManager,
         isParallelTxProcessingEnabled,
         balConfiguration,
-        metricsSystem);
+        metricsSystem,
+        protocolSpecProviderRegistry != null
+            ? protocolSpecProviderRegistry.getProviders()
+            : Collections.emptyList());
   }
 }
