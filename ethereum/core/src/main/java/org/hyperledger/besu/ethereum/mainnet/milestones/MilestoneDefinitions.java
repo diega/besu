@@ -69,9 +69,6 @@ public class MilestoneDefinitions {
             isParallelTxProcessingEnabled,
             chainId);
     registerMainnetMilestones(registry, specFactory, config);
-    // NOTE: Classic milestones will be contributed by ClassicProtocolSpecProvider plugin
-    // For now, we still register them here until the plugin is ready
-    registerClassicMilestones(registry, specFactory, config);
     return registry;
   }
 
@@ -86,10 +83,7 @@ public class MilestoneDefinitions {
   @Deprecated
   public static List<MilestoneDefinition> createMilestoneDefinitions(
       final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
-    List<MilestoneDefinition> milestones = new ArrayList<>();
-    milestones.addAll(createMainnetMilestoneDefinitions(specFactory, config));
-    milestones.addAll(createClassicMilestoneDefinitions(specFactory, config));
-    return milestones;
+    return createMainnetMilestoneDefinitions(specFactory, config);
   }
 
   /**
@@ -213,119 +207,6 @@ public class MilestoneDefinitions {
         MainnetHardforkId.EXPERIMENTAL_EIPS,
         config.getExperimentalEipsTime(),
         specFactory::experimentalEipsDefinition);
-  }
-
-  /**
-   * Registers Classic milestones to the registry. This will be moved to the Classic plugin.
-   *
-   * @param registry the milestone registry to register to
-   * @param specFactory the protocol spec factory
-   * @param config the genesis config options
-   */
-  private static void registerClassicMilestones(
-      final MilestoneRegistry registry,
-      final MainnetProtocolSpecFactory specFactory,
-      final GenesisConfigOptions config) {
-    registry.addBlockNumberMilestone(
-        HardforkId.ClassicHardforkId.CLASSIC_TANGERINE_WHISTLE,
-        config.getEcip1015BlockNumber(),
-        specFactory::tangerineWhistleDefinition);
-    registry.addBlockNumberMilestone(
-        HardforkId.ClassicHardforkId.DIE_HARD,
-        config.getDieHardBlockNumber(),
-        specFactory::dieHardDefinition);
-    registry.addBlockNumberMilestone(
-        HardforkId.ClassicHardforkId.GOTHAM,
-        config.getGothamBlockNumber(),
-        specFactory::gothamDefinition);
-    registry.addBlockNumberMilestone(
-        HardforkId.ClassicHardforkId.DEFUSE_DIFFICULTY_BOMB,
-        config.getDefuseDifficultyBombBlockNumber(),
-        specFactory::defuseDifficultyBombDefinition);
-    registry.addBlockNumberMilestone(
-        HardforkId.ClassicHardforkId.ATLANTIS,
-        config.getAtlantisBlockNumber(),
-        specFactory::atlantisDefinition);
-    registry.addBlockNumberMilestone(
-        HardforkId.ClassicHardforkId.AGHARTA,
-        config.getAghartaBlockNumber(),
-        specFactory::aghartaDefinition);
-    registry.addBlockNumberMilestone(
-        HardforkId.ClassicHardforkId.PHOENIX,
-        config.getPhoenixBlockNumber(),
-        specFactory::phoenixDefinition);
-    registry.addBlockNumberMilestone(
-        HardforkId.ClassicHardforkId.THANOS,
-        config.getThanosBlockNumber(),
-        specFactory::thanosDefinition);
-    registry.addBlockNumberMilestone(
-        HardforkId.ClassicHardforkId.MAGNETO,
-        config.getMagnetoBlockNumber(),
-        specFactory::magnetoDefinition);
-    registry.addBlockNumberMilestone(
-        HardforkId.ClassicHardforkId.MYSTIQUE,
-        config.getMystiqueBlockNumber(),
-        specFactory::mystiqueDefinition);
-    registry.addBlockNumberMilestone(
-        HardforkId.ClassicHardforkId.SPIRAL,
-        config.getSpiralBlockNumber(),
-        specFactory::spiralDefinition);
-  }
-
-  /**
-   * Returns the milestone definitions for the Classic network.
-   *
-   * @param specFactory the protocol spec factory
-   * @param config the genesis config options
-   * @return a list of milestone definitions for the Classic network
-   */
-  private static List<MilestoneDefinition> createClassicMilestoneDefinitions(
-      final MainnetProtocolSpecFactory specFactory, final GenesisConfigOptions config) {
-    return List.of(
-        createBlockNumberMilestone(
-            HardforkId.ClassicHardforkId.CLASSIC_TANGERINE_WHISTLE,
-            config.getEcip1015BlockNumber(),
-            specFactory::tangerineWhistleDefinition),
-        createBlockNumberMilestone(
-            HardforkId.ClassicHardforkId.DIE_HARD,
-            config.getDieHardBlockNumber(),
-            specFactory::dieHardDefinition),
-        createBlockNumberMilestone(
-            HardforkId.ClassicHardforkId.GOTHAM,
-            config.getGothamBlockNumber(),
-            specFactory::gothamDefinition),
-        createBlockNumberMilestone(
-            HardforkId.ClassicHardforkId.DEFUSE_DIFFICULTY_BOMB,
-            config.getDefuseDifficultyBombBlockNumber(),
-            specFactory::defuseDifficultyBombDefinition),
-        createBlockNumberMilestone(
-            HardforkId.ClassicHardforkId.ATLANTIS,
-            config.getAtlantisBlockNumber(),
-            specFactory::atlantisDefinition),
-        createBlockNumberMilestone(
-            HardforkId.ClassicHardforkId.AGHARTA,
-            config.getAghartaBlockNumber(),
-            specFactory::aghartaDefinition),
-        createBlockNumberMilestone(
-            HardforkId.ClassicHardforkId.PHOENIX,
-            config.getPhoenixBlockNumber(),
-            specFactory::phoenixDefinition),
-        createBlockNumberMilestone(
-            HardforkId.ClassicHardforkId.THANOS,
-            config.getThanosBlockNumber(),
-            specFactory::thanosDefinition),
-        createBlockNumberMilestone(
-            HardforkId.ClassicHardforkId.MAGNETO,
-            config.getMagnetoBlockNumber(),
-            specFactory::magnetoDefinition),
-        createBlockNumberMilestone(
-            HardforkId.ClassicHardforkId.MYSTIQUE,
-            config.getMystiqueBlockNumber(),
-            specFactory::mystiqueDefinition),
-        createBlockNumberMilestone(
-            HardforkId.ClassicHardforkId.SPIRAL,
-            config.getSpiralBlockNumber(),
-            specFactory::spiralDefinition));
   }
 
   /**

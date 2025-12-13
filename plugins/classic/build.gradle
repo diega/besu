@@ -49,6 +49,7 @@ dependencies {
   testImplementation project(':testutil')
   testImplementation project(':metrics:core')
   testImplementation project(':app')
+  testImplementation project(':consensus:merge')
   testImplementation project(':ethereum:api')
   testImplementation project(':crypto:services')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')

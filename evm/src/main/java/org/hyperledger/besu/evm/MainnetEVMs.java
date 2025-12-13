@@ -578,7 +578,7 @@ public class MainnetEVMs {
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
    */
-  static void registerIstanbulOperations(
+  public static void registerIstanbulOperations(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
       final BigInteger chainId,

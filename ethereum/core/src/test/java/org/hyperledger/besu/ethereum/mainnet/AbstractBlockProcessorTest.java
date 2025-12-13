@@ -142,7 +142,7 @@ abstract class AbstractBlockProcessorTest {
     }
 
     @Override
-    boolean rewardCoinbase(
+    protected boolean rewardCoinbase(
         final MutableWorldState worldState,
         final BlockHeader header,
         final List<BlockHeader> ommers,

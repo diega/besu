@@ -12,10 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.plugin.classic.protocol;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Quantity;
+import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 
 import java.math.BigInteger;
 

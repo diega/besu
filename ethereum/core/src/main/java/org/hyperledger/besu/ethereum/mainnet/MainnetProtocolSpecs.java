@@ -1288,7 +1288,7 @@ public abstract class MainnetProtocolSpecs {
     }
   }
 
-  private abstract static class PostFrontierTransactionReceiptFactory
+  public abstract static class PostFrontierTransactionReceiptFactory
       implements TransactionReceiptFactory {
     protected final boolean revertReasonEnabled;
 
@@ -1306,7 +1306,8 @@ public abstract class MainnetProtocolSpecs {
     }
   }
 
-  static class ByzantiumTransactionReceiptFactory extends PostFrontierTransactionReceiptFactory {
+  public static class ByzantiumTransactionReceiptFactory
+      extends PostFrontierTransactionReceiptFactory {
     public ByzantiumTransactionReceiptFactory(final boolean revertReasonEnabled) {
       super(revertReasonEnabled);
     }
@@ -1324,7 +1325,8 @@ public abstract class MainnetProtocolSpecs {
     }
   }
 
-  static class BerlinTransactionReceiptFactory extends PostFrontierTransactionReceiptFactory {
+  public static class BerlinTransactionReceiptFactory
+      extends PostFrontierTransactionReceiptFactory {
 
     public BerlinTransactionReceiptFactory(final boolean revertReasonEnabled) {
       super(revertReasonEnabled);

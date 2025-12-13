@@ -15,8 +15,10 @@
 package org.hyperledger.besu.plugin.classic;
 
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinatorFactoryRegistry;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecProviderRegistry;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.classic.protocol.ClassicProtocolSpecProvider;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.network.NetworkProviderRegistry;
 
@@ -71,6 +73,16 @@ public class ClassicMiningPlugin implements BesuPlugin {
               LOG.debug("Classic network provider registered (classic, mordor)");
             },
             () -> LOG.warn("NetworkProviderRegistry not available"));
+
+    // Register Classic protocol spec provider
+    context
+        .getService(ProtocolSpecProviderRegistry.class)
+        .ifPresentOrElse(
+            registry -> {
+              registry.registerProvider(new ClassicProtocolSpecProvider());
+              LOG.debug("Classic protocol spec provider registered");
+            },
+            () -> LOG.warn("ProtocolSpecProviderRegistry not available"));
   }
 
   @Override

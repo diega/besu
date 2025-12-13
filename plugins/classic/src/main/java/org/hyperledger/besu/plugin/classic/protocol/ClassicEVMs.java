@@ -12,10 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm;
+package org.hyperledger.besu.plugin.classic.protocol;
 
 import static org.hyperledger.besu.evm.MainnetEVMs.registerIstanbulOperations;
 
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.OperationRegistry;

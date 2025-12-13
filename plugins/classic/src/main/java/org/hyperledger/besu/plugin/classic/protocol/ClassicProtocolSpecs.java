@@ -12,28 +12,35 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.plugin.classic.protocol;
 
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.AGHARTA;
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.ATLANTIS;
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.CLASSIC_RECOVERY_INIT;
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.CLASSIC_TANGERINE_WHISTLE;
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.DEFUSE_DIFFICULTY_BOMB;
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.DIE_HARD;
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.GOTHAM;
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.MAGNETO;
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.MYSTIQUE;
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.PHOENIX;
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.SPIRAL;
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.THANOS;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHasher;
+import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.AGHARTA;
+import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.ATLANTIS;
+import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.CLASSIC_RECOVERY_INIT;
+import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.CLASSIC_TANGERINE_WHISTLE;
+import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.DEFUSE_DIFFICULTY_BOMB;
+import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.DIE_HARD;
+import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.GOTHAM;
+import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.MAGNETO;
+import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.MYSTIQUE;
+import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.PHOENIX;
+import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.SPIRAL;
+import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.THANOS;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.evm.ClassicEVMs;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.MainnetPrecompiledContractRegistries;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;

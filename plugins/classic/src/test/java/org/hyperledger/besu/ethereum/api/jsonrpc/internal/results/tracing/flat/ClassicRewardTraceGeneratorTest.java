@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -27,14 +27,15 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.plugin.classic.protocol.ClassicBlockProcessor;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,7 +47,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class RewardTraceGeneratorTest {
+public class ClassicRewardTraceGeneratorTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
@@ -61,6 +62,7 @@ public class RewardTraceGeneratorTest {
       Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d88"));
   private final Wei blockReward = Wei.of(10000);
   private final BlockHeader ommerHeader = gen.header(0x09);
+  private final OptionalLong eraRounds = OptionalLong.of(5000000);
   private Block block;
 
   @BeforeEach
@@ -79,16 +81,17 @@ public class RewardTraceGeneratorTest {
   }
 
   @Test
-  public void assertThatTraceGeneratorReturnValidRewardsForMainnetBlockProcessor() {
+  public void assertThatTraceGeneratorReturnValidRewardsForClassicBlockProcessor() {
     final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
         mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
-    final MainnetBlockProcessor blockProcessor =
-        new MainnetBlockProcessor(
+    final ClassicBlockProcessor blockProcessor =
+        new ClassicBlockProcessor(
             transactionProcessor,
             transactionReceiptFactory,
             blockReward,
             BlockHeader::getCoinbase,
             true,
+            eraRounds,
             protocolSchedule,
             BalConfiguration.DEFAULT);
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
@@ -112,7 +115,7 @@ public class RewardTraceGeneratorTest {
             .type("reward")
             .build();
 
-    // calculate reward with MainnetBlockProcessor
+    // calculate reward with ClassicBlockProcessor
     final Action.Builder actionOmmerReward =
         Action.builder()
             .rewardType("uncle")

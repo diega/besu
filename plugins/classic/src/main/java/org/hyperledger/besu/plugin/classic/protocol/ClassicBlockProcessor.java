@@ -12,11 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.plugin.classic.protocol;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -56,7 +62,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
   }
 
   @Override
-  boolean rewardCoinbase(
+  protected boolean rewardCoinbase(
       final MutableWorldState worldState,
       final BlockHeader header,
       final List<BlockHeader> ommers,

@@ -92,12 +92,12 @@ public final class MainnetBlockHeaderValidator {
     return header.getNumber() != 1_920_000 || header.getHash().equals(CLASSIC_FORK_BLOCK_HEADER);
   }
 
-  static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator() {
+  public static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator() {
     return createLegacyFeeMarketOmmerValidator(
         new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
   }
 
-  static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator(
+  public static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator(
       final EpochCalculator epochCalculator, final PoWHasher hasher) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
