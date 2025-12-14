@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetPrecompiledContractRegistries;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.evm.MainnetEVMs;
@@ -84,7 +85,7 @@ public class ClassicProtocolSpecs {
             metricsSystem)
         .blockHeaderValidatorBuilder(
             (feeMarket, gasCalculator, gasLimitCalculator) ->
-                MainnetBlockHeaderValidator.createClassicValidator())
+                ClassicBlockHeaderValidator.createClassicValidator(PoWHasher.ETHASH_LIGHT))
         .hardforkId(CLASSIC_RECOVERY_INIT);
   }
 

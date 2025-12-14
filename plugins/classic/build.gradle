@@ -53,6 +53,7 @@ dependencies {
   testImplementation project(':ethereum:api')
   testImplementation project(':crypto:services')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':ethereum:eth', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
   testImplementation 'com.google.dagger:dagger'
   testImplementation 'io.tmio:tuweni-bytes'

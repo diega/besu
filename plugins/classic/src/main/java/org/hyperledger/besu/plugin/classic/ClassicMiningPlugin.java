@@ -15,9 +15,11 @@
 package org.hyperledger.besu.plugin.classic;
 
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinatorFactoryRegistry;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidatorProviderRegistry;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecProviderRegistry;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.classic.peervalidation.ClassicPeerValidatorProvider;
 import org.hyperledger.besu.plugin.classic.protocol.ClassicProtocolSpecProvider;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.network.NetworkProviderRegistry;
@@ -83,6 +85,16 @@ public class ClassicMiningPlugin implements BesuPlugin {
               LOG.debug("Classic protocol spec provider registered");
             },
             () -> LOG.warn("ProtocolSpecProviderRegistry not available"));
+
+    // Register Classic peer validator provider
+    context
+        .getService(PeerValidatorProviderRegistry.class)
+        .ifPresentOrElse(
+            registry -> {
+              registry.registerProvider(new ClassicPeerValidatorProvider());
+              LOG.debug("Classic peer validator provider registered");
+            },
+            () -> LOG.warn("PeerValidatorProviderRegistry not available"));
   }
 
   @Override
