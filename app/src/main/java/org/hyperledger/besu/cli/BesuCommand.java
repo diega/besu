@@ -124,6 +124,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParametersMetrics;
 import org.hyperledger.besu.ethereum.core.VersionMetadata;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidatorProviderRegistry;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -197,6 +198,7 @@ import org.hyperledger.besu.services.MiningCoordinatorFactoryRegistryImpl;
 import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.NetworkProviderRegistryImpl;
 import org.hyperledger.besu.services.P2PServiceImpl;
+import org.hyperledger.besu.services.PeerValidatorProviderRegistryImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.ProtocolSpecProviderRegistryImpl;
@@ -350,6 +352,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final MiningCoordinatorFactoryRegistryImpl miningCoordinatorFactoryRegistry;
   private final NetworkProviderRegistryImpl networkProviderRegistry;
   private final ProtocolSpecProviderRegistryImpl protocolSpecProviderRegistry;
+  private final PeerValidatorProviderRegistryImpl peerValidatorProviderRegistry;
 
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
@@ -714,6 +717,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new MiningCoordinatorFactoryRegistryImpl(),
         new NetworkProviderRegistryImpl(),
         new ProtocolSpecProviderRegistryImpl(),
+        new PeerValidatorProviderRegistryImpl(),
         new TransactionSelectionServiceImpl(),
         new TransactionPoolValidatorServiceImpl(),
         new TransactionSimulationServiceImpl(),
@@ -741,6 +745,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param miningCoordinatorFactoryRegistry instance of MiningCoordinatorFactoryRegistryImpl
    * @param networkProviderRegistry instance of NetworkProviderRegistryImpl
    * @param protocolSpecProviderRegistry instance of ProtocolSpecProviderRegistryImpl
+   * @param peerValidatorProviderRegistry instance of PeerValidatorProviderRegistryImpl
    * @param transactionSelectionServiceImpl instance of TransactionSelectionServiceImpl
    * @param transactionPoolValidatorServiceImpl instance of TransactionPoolValidatorServiceImpl
    * @param transactionSimulationServiceImpl instance of TransactionSimulationServiceImpl
@@ -766,6 +771,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final MiningCoordinatorFactoryRegistryImpl miningCoordinatorFactoryRegistry,
       final NetworkProviderRegistryImpl networkProviderRegistry,
       final ProtocolSpecProviderRegistryImpl protocolSpecProviderRegistry,
+      final PeerValidatorProviderRegistryImpl peerValidatorProviderRegistry,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
       final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl,
       final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
@@ -797,6 +803,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.miningCoordinatorFactoryRegistry = miningCoordinatorFactoryRegistry;
     this.networkProviderRegistry = networkProviderRegistry;
     this.protocolSpecProviderRegistry = protocolSpecProviderRegistry;
+    this.peerValidatorProviderRegistry = peerValidatorProviderRegistry;
     this.transactionSelectionServiceImpl = transactionSelectionServiceImpl;
     this.transactionPoolValidatorServiceImpl = transactionPoolValidatorServiceImpl;
     this.transactionSimulationServiceImpl = transactionSimulationServiceImpl;
@@ -1233,6 +1240,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         MiningCoordinatorFactoryRegistry.class, miningCoordinatorFactoryRegistry);
     besuPluginContext.addService(NetworkProviderRegistry.class, networkProviderRegistry);
     besuPluginContext.addService(ProtocolSpecProviderRegistry.class, protocolSpecProviderRegistry);
+    besuPluginContext.addService(
+        PeerValidatorProviderRegistry.class, peerValidatorProviderRegistry);
     besuPluginContext.addService(
         TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
@@ -1900,6 +1909,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .miningParameters(miningParametersSupplier.get())
             .miningCoordinatorFactoryRegistry(miningCoordinatorFactoryRegistry)
             .protocolSpecProviderRegistry(protocolSpecProviderRegistry)
+            .peerValidatorProviderRegistry(peerValidatorProviderRegistry)
             .transactionPoolConfiguration(buildTransactionPoolConfiguration())
             .nodeKey(new NodeKey(securityModule()))
             .metricsSystem((ObservableMetricsSystem) besuComponent.getMetricsSystem())

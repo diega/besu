@@ -63,6 +63,7 @@ import org.hyperledger.besu.ethereum.eth.peervalidation.CheckpointBlocksPeerVali
 import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidatorProviderRegistry;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
@@ -237,6 +238,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** The protocol spec provider registry */
   protected ProtocolSpecProviderRegistry protocolSpecProviderRegistry;
+
+  /** The peer validator provider registry */
+  protected PeerValidatorProviderRegistry peerValidatorProviderRegistry;
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -617,6 +621,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   public BesuControllerBuilder protocolSpecProviderRegistry(
       final ProtocolSpecProviderRegistry registry) {
     this.protocolSpecProviderRegistry = registry;
+    return this;
+  }
+
+  /**
+   * Sets the peer validator provider registry.
+   *
+   * @param registry the peer validator provider registry
+   * @return this builder
+   */
+  public BesuControllerBuilder peerValidatorProviderRegistry(
+      final PeerValidatorProviderRegistry registry) {
+    this.peerValidatorProviderRegistry = registry;
     return this;
   }
 
@@ -1407,6 +1423,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               checkpointConfigOptions.getNumber().orElseThrow(),
               checkpointConfigOptions.getHash().map(Hash::fromHexString).orElseThrow()));
     }
+
+    // Add validators from plugin if provider is registered
+    if (peerValidatorProviderRegistry != null
+        && peerValidatorProviderRegistry.getProvider() != null) {
+      final PeerValidator pluginValidator =
+          peerValidatorProviderRegistry
+              .getProvider()
+              .createPeerValidator(protocolSchedule, peerTaskExecutor, genesisConfigOptions);
+      if (pluginValidator != null) {
+        validators.add(pluginValidator);
+      }
+    }
+
     return validators;
   }
 

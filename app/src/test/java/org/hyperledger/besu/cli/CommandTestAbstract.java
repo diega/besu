@@ -85,6 +85,7 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.MiningCoordinatorFactoryRegistryImpl;
 import org.hyperledger.besu.services.NetworkProviderRegistryImpl;
+import org.hyperledger.besu.services.PeerValidatorProviderRegistryImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.ProtocolSpecProviderRegistryImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
@@ -294,6 +295,8 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.miningCoordinatorFactoryRegistry(any()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.protocolSpecProviderRegistry(any()))
+        .thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.peerValidatorProviderRegistry(any()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.nodeKey(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.metricsSystem(any())).thenReturn(mockControllerBuilder);
@@ -632,6 +635,7 @@ public abstract class CommandTestAbstract {
           new MiningCoordinatorFactoryRegistryImpl(),
           new NetworkProviderRegistryImpl(),
           new ProtocolSpecProviderRegistryImpl(),
+          new PeerValidatorProviderRegistryImpl(),
           new TransactionSelectionServiceImpl(),
           new TransactionPoolValidatorServiceImpl(),
           new TransactionSimulationServiceImpl(),
