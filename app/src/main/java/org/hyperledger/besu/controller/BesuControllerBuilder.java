@@ -78,6 +78,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
+import org.hyperledger.besu.ethereum.forkid.ForkBlockNumbersProvider;
+import org.hyperledger.besu.ethereum.forkid.ForkBlockNumbersProviderRegistry;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -125,6 +127,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -240,6 +243,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** The peer validator provider registry */
   protected PeerValidatorProviderRegistry peerValidatorProviderRegistry;
+
+  /** The fork block numbers provider registry */
+  protected ForkBlockNumbersProviderRegistry forkBlockNumbersProviderRegistry;
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -636,6 +642,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * Sets the fork block numbers provider registry.
+   *
+   * @param registry the fork block numbers provider registry
+   * @return this builder
+   */
+  public BesuControllerBuilder forkBlockNumbersProviderRegistry(
+      final ForkBlockNumbersProviderRegistry registry) {
+    this.forkBlockNumbersProviderRegistry = registry;
+    return this;
+  }
+
+  /**
    * Build besu controller.
    *
    * @return the besu controller
@@ -748,11 +766,21 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
     final Supplier<ProtocolSpec> currentProtocolSpecSupplier =
         () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
-    final ForkIdManager forkIdManager =
-        new ForkIdManager(
-            blockchain,
+
+    // Combine fork numbers/timestamps from config with those provided by plugins
+    final List<Long> allForkBlockNumbers =
+        combineForkValues(
             genesisConfigOptions.getForkBlockNumbers(),
-            genesisConfigOptions.getForkBlockTimestamps());
+            forkBlockNumbersProviderRegistry,
+            ForkBlockNumbersProvider::getForkBlockNumbers);
+    final List<Long> allForkTimestamps =
+        combineForkValues(
+            genesisConfigOptions.getForkBlockTimestamps(),
+            forkBlockNumbersProviderRegistry,
+            ForkBlockNumbersProvider::getForkTimestamps);
+
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(blockchain, allForkBlockNumbers, allForkTimestamps);
     final EthPeers ethPeers =
         new EthPeers(
             currentProtocolSpecSupplier,
@@ -945,7 +973,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         ethPeers,
         storageProvider,
         dataStorageConfiguration,
-        transactionSimulator);
+        transactionSimulator,
+        allForkBlockNumbers,
+        allForkTimestamps);
   }
 
   private void preloadBlockHeaderCache(
@@ -1439,4 +1469,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    */
   protected abstract PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext);
+
+  private List<Long> combineForkValues(
+      final List<Long> builtinForkValues,
+      final ForkBlockNumbersProviderRegistry extendedForkValuesRegistry,
+      final BiFunction<ForkBlockNumbersProvider, GenesisConfigOptions, List<Long>>
+          extendedForkValuesResolver) {
+    if (extendedForkValuesRegistry == null || extendedForkValuesRegistry.getProvider() == null) {
+      return builtinForkValues;
+    }
+    final List<Long> combined = new ArrayList<>(builtinForkValues);
+    combined.addAll(
+        extendedForkValuesResolver.apply(
+            extendedForkValuesRegistry.getProvider(), genesisConfigOptions));
+    return combined;
+  }
 }

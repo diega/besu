@@ -135,10 +135,8 @@ public final class RunnerBuilderTest {
     when(besuController.getMiningCoordinator()).thenReturn(mock(MiningCoordinator.class));
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
     when(besuController.getEthPeers()).thenReturn(mock(EthPeers.class));
-    final GenesisConfigOptions genesisConfigOptions = mock(GenesisConfigOptions.class);
-    when(genesisConfigOptions.getForkBlockNumbers()).thenReturn(Collections.emptyList());
-    when(genesisConfigOptions.getForkBlockTimestamps()).thenReturn(Collections.emptyList());
-    when(besuController.getGenesisConfigOptions()).thenReturn(genesisConfigOptions);
+    when(besuController.getAllForkBlockNumbers()).thenReturn(Collections.emptyList());
+    when(besuController.getAllForkTimestamps()).thenReturn(Collections.emptyList());
   }
 
   @Test
@@ -186,6 +184,7 @@ public final class RunnerBuilderTest {
 
   @Test
   public void movingAcrossProtocolSpecsUpdatesNodeRecord() {
+    setupNonPoaGenesisConfig();
     final BlockDataGenerator gen = new BlockDataGenerator();
     final String p2pAdvertisedHost = "172.0.0.1";
     final int p2pListenPort = 30301;
@@ -244,6 +243,7 @@ public final class RunnerBuilderTest {
   @Test
   public void whenEngineApiAddedListensOnDefaultPort() {
     setupBlockchainAndBlock();
+    setupNonPoaGenesisConfig();
 
     final JsonRpcConfiguration jrpc = JsonRpcConfiguration.createDefault();
     jrpc.setEnabled(true);
@@ -289,6 +289,7 @@ public final class RunnerBuilderTest {
   @Test
   public void whenEngineApiAddedWebSocketReadyOnSamePort() {
     setupBlockchainAndBlock();
+    setupNonPoaGenesisConfig();
 
     final WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
@@ -333,6 +334,7 @@ public final class RunnerBuilderTest {
   @Test
   public void whenEngineApiAddedEthSubscribeAvailable() {
     setupBlockchainAndBlock();
+    setupNonPoaGenesisConfig();
 
     final WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
@@ -380,6 +382,7 @@ public final class RunnerBuilderTest {
   @Test
   public void noEngineApiNoServiceForMethods() {
     setupBlockchainAndBlock();
+    setupNonPoaGenesisConfig();
 
     final JsonRpcConfiguration defaultRpcConfig = JsonRpcConfiguration.createDefault();
     defaultRpcConfig.setEnabled(true);
@@ -427,5 +430,11 @@ public final class RunnerBuilderTest {
     final Block block = mock(Block.class);
     when(blockchain.getGenesisBlock()).thenReturn(block);
     when(block.getHash()).thenReturn(Hash.ZERO);
+  }
+
+  private void setupNonPoaGenesisConfig() {
+    final GenesisConfigOptions genesisConfigOptions = mock(GenesisConfigOptions.class);
+    when(genesisConfigOptions.isPoa()).thenReturn(false);
+    when(besuController.getGenesisConfigOptions()).thenReturn(genesisConfigOptions);
   }
 }

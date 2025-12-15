@@ -129,6 +129,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.forkid.ForkBlockNumbersProviderRegistry;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecProviderRegistry;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -194,6 +195,7 @@ import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockSimulatorServiceImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
+import org.hyperledger.besu.services.ForkBlockNumbersProviderRegistryImpl;
 import org.hyperledger.besu.services.MiningCoordinatorFactoryRegistryImpl;
 import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.NetworkProviderRegistryImpl;
@@ -353,6 +355,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NetworkProviderRegistryImpl networkProviderRegistry;
   private final ProtocolSpecProviderRegistryImpl protocolSpecProviderRegistry;
   private final PeerValidatorProviderRegistryImpl peerValidatorProviderRegistry;
+  private final ForkBlockNumbersProviderRegistryImpl forkBlockNumbersProviderRegistry;
 
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
@@ -718,6 +721,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new NetworkProviderRegistryImpl(),
         new ProtocolSpecProviderRegistryImpl(),
         new PeerValidatorProviderRegistryImpl(),
+        new ForkBlockNumbersProviderRegistryImpl(),
         new TransactionSelectionServiceImpl(),
         new TransactionPoolValidatorServiceImpl(),
         new TransactionSimulationServiceImpl(),
@@ -772,6 +776,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final NetworkProviderRegistryImpl networkProviderRegistry,
       final ProtocolSpecProviderRegistryImpl protocolSpecProviderRegistry,
       final PeerValidatorProviderRegistryImpl peerValidatorProviderRegistry,
+      final ForkBlockNumbersProviderRegistryImpl forkBlockNumbersProviderRegistry,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
       final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl,
       final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
@@ -804,6 +809,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.networkProviderRegistry = networkProviderRegistry;
     this.protocolSpecProviderRegistry = protocolSpecProviderRegistry;
     this.peerValidatorProviderRegistry = peerValidatorProviderRegistry;
+    this.forkBlockNumbersProviderRegistry = forkBlockNumbersProviderRegistry;
     this.transactionSelectionServiceImpl = transactionSelectionServiceImpl;
     this.transactionPoolValidatorServiceImpl = transactionPoolValidatorServiceImpl;
     this.transactionSimulationServiceImpl = transactionSimulationServiceImpl;
@@ -1242,6 +1248,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(ProtocolSpecProviderRegistry.class, protocolSpecProviderRegistry);
     besuPluginContext.addService(
         PeerValidatorProviderRegistry.class, peerValidatorProviderRegistry);
+    besuPluginContext.addService(
+        ForkBlockNumbersProviderRegistry.class, forkBlockNumbersProviderRegistry);
     besuPluginContext.addService(
         TransactionSelectionService.class, transactionSelectionServiceImpl);
     besuPluginContext.addService(
@@ -1910,6 +1918,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .miningCoordinatorFactoryRegistry(miningCoordinatorFactoryRegistry)
             .protocolSpecProviderRegistry(protocolSpecProviderRegistry)
             .peerValidatorProviderRegistry(peerValidatorProviderRegistry)
+            .forkBlockNumbersProviderRegistry(forkBlockNumbersProviderRegistry)
             .transactionPoolConfiguration(buildTransactionPoolConfiguration())
             .nodeKey(new NodeKey(securityModule()))
             .metricsSystem((ObservableMetricsSystem) besuComponent.getMetricsSystem())

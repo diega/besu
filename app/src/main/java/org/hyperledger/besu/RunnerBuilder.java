@@ -696,7 +696,6 @@ public class RunnerBuilder {
     final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;
     final NatService natService = new NatService(buildNatManager(natMethod), fallbackEnabled);
     final NetworkBuilder inactiveNetwork = caps -> new NoopP2PNetwork();
-
     final NetworkBuilder activeNetwork =
         caps -> {
           return DefaultP2PNetwork.builder()
@@ -709,8 +708,8 @@ public class RunnerBuilder {
               .natService(natService)
               .storageProvider(storageProvider)
               .blockchain(context.getBlockchain())
-              .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
-              .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
+              .blockNumberForks(besuController.getAllForkBlockNumbers())
+              .timestampForks(besuController.getAllForkTimestamps())
               .allConnectionsSupplier(ethPeers::streamAllConnections)
               .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
               .maxPeers(ethPeers.getMaxPeers())

@@ -76,6 +76,8 @@ public class BesuController implements java.io.Closeable {
   private final StorageProvider storageProvider;
   private final DataStorageConfiguration dataStorageConfiguration;
   private final TransactionSimulator transactionSimulator;
+  private final List<Long> allForkBlockNumbers;
+  private final List<Long> allForkTimestamps;
 
   /**
    * Instantiates a new Besu controller.
@@ -98,6 +100,8 @@ public class BesuController implements java.io.Closeable {
    * @param storageProvider the storage provider
    * @param dataStorageConfiguration the data storage configuration
    * @param transactionSimulator the transaction simulator
+   * @param allForkBlockNumbers the combined fork block numbers (built-in + plugin-provided)
+   * @param allForkTimestamps the combined fork timestamps (built-in + plugin-provided)
    */
   BesuController(
       final ProtocolSchedule protocolSchedule,
@@ -117,7 +121,9 @@ public class BesuController implements java.io.Closeable {
       final EthPeers ethPeers,
       final StorageProvider storageProvider,
       final DataStorageConfiguration dataStorageConfiguration,
-      final TransactionSimulator transactionSimulator) {
+      final TransactionSimulator transactionSimulator,
+      final List<Long> allForkBlockNumbers,
+      final List<Long> allForkTimestamps) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -136,6 +142,8 @@ public class BesuController implements java.io.Closeable {
     this.storageProvider = storageProvider;
     this.dataStorageConfiguration = dataStorageConfiguration;
     this.transactionSimulator = transactionSimulator;
+    this.allForkBlockNumbers = allForkBlockNumbers;
+    this.allForkTimestamps = allForkTimestamps;
   }
 
   /**
@@ -304,6 +312,24 @@ public class BesuController implements java.io.Closeable {
    */
   public TransactionSimulator getTransactionSimulator() {
     return transactionSimulator;
+  }
+
+  /**
+   * Gets all fork block numbers (built-in + plugin-provided).
+   *
+   * @return the combined fork block numbers
+   */
+  public List<Long> getAllForkBlockNumbers() {
+    return allForkBlockNumbers;
+  }
+
+  /**
+   * Gets all fork timestamps (built-in + plugin-provided).
+   *
+   * @return the combined fork timestamps
+   */
+  public List<Long> getAllForkTimestamps() {
+    return allForkTimestamps;
   }
 
   /** The type Builder. */
