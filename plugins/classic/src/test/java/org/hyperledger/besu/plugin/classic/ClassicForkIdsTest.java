@@ -15,7 +15,6 @@
 package org.hyperledger.besu.plugin.classic;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -42,6 +41,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.classic.protocol.ClassicProtocolSpecProvider;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -118,12 +118,15 @@ public class ClassicForkIdsTest {
 
     final AtomicLong blockNumber = new AtomicLong();
     when(mockBlockchain.getChainHeadHeader()).thenReturn(mockBlockHeader);
-    lenient().when(mockBlockHeader.getNumber()).thenAnswer(o -> blockNumber.get());
-    lenient().when(mockBlockHeader.getTimestamp()).thenAnswer(o -> blockNumber.get());
+    when(mockBlockHeader.getNumber()).thenAnswer(o -> blockNumber.get());
+
+    // Combine forks from config and Classic provider
+    final ClassicForkBlockNumbersProvider provider = new ClassicForkBlockNumbersProvider();
+    final List<Long> allForkBlockNumbers = new ArrayList<>(genesisConfig.getForkBlockNumbers());
+    allForkBlockNumbers.addAll(provider.getForkBlockNumbers(genesisConfig.getConfigOptions()));
 
     final ForkIdManager forkIdManager =
-        new ForkIdManager(
-            mockBlockchain, genesisConfig.getForkBlockNumbers(), genesisConfig.getForkTimestamps());
+        new ForkIdManager(mockBlockchain, allForkBlockNumbers, List.of());
 
     final List<ForkId> actualForkIds =
         Streams.concat(schedule.streamMilestoneBlocks(), Stream.of(Long.MAX_VALUE))

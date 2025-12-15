@@ -675,18 +675,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getLondonBlockNumber(),
             getArrowGlacierBlockNumber(),
             getGrayGlacierBlockNumber(),
-            getMergeNetSplitBlockNumber(),
-            getEcip1015BlockNumber(),
-            getDieHardBlockNumber(),
-            getGothamBlockNumber(),
-            getDefuseDifficultyBombBlockNumber(),
-            getAtlantisBlockNumber(),
-            getAghartaBlockNumber(),
-            getPhoenixBlockNumber(),
-            getThanosBlockNumber(),
-            getMagnetoBlockNumber(),
-            getMystiqueBlockNumber(),
-            getSpiralBlockNumber());
+            getMergeNetSplitBlockNumber());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockNumbers
