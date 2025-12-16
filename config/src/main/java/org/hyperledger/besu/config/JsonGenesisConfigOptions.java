@@ -22,18 +22,22 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Json genesis config options. */
@@ -516,7 +520,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public Map<String, Object> asMap() {
-    final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+    final Map<String, Object> builder = new LinkedHashMap<>();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
 
     // mainnet fork blocks
@@ -602,7 +606,18 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
       builder.put("blobSchedule", getBlobScheduleOptions().get().asMap());
     }
 
-    return builder.build();
+    // Add any additional fields from raw config not already present (case-insensitive check)
+    final Set<String> existingKeys = new HashSet<>();
+    for (String key : builder.keySet()) {
+      existingKeys.add(key.toLowerCase(Locale.ROOT));
+    }
+    for (Map.Entry<String, Object> entry : getRawConfigMap().entrySet()) {
+      if (!existingKeys.contains(entry.getKey().toLowerCase(Locale.ROOT))) {
+        builder.put(entry.getKey(), entry.getValue());
+      }
+    }
+
+    return Collections.unmodifiableMap(builder);
   }
 
   private OptionalLong getOptionalLong(final String key) {

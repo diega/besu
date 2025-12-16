@@ -244,4 +244,25 @@ public class JsonGenesisConfigOptionsTest {
       throw new RuntimeException("Failed to load resource", e);
     }
   }
+
+  @Test
+  public void asMapIncludesUnhandledFieldsFromRawConfig() {
+    final ObjectNode configNode = JsonUtil.createEmptyObjectNode();
+    configNode.put("chainid", 123);
+    configNode.put("homesteadblock", 1);
+    configNode.put("customForkBlock", 100);
+    configNode.put("pluginSpecificField", 200);
+
+    final JsonGenesisConfigOptions configOptions =
+        JsonGenesisConfigOptions.fromJsonObject(configNode);
+
+    final var map = configOptions.asMap();
+
+    // Standard fields are included with canonical names
+    assertThat(map).containsEntry("chainId", java.math.BigInteger.valueOf(123));
+    assertThat(map).containsEntry("homesteadBlock", 1L);
+    // Custom/plugin fields from raw config are also included with original names
+    assertThat(map).containsEntry("customForkBlock", 100);
+    assertThat(map).containsEntry("pluginSpecificField", 200);
+  }
 }
