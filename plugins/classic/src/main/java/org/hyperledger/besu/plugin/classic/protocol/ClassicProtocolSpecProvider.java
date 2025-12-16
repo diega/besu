@@ -14,6 +14,18 @@
  */
 package org.hyperledger.besu.plugin.classic.protocol;
 
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getAghartaBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getAtlantisBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getDefuseDifficultyBombBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getDieHardBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getEcip1015BlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getGothamBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getMagnetoBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getMystiqueBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getPhoenixBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getSpiralBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getThanosBlockNumber;
+
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MilestoneRegistry;
@@ -49,7 +61,7 @@ public class ClassicProtocolSpecProvider implements ProtocolSpecProvider {
 
     registry.addBlockNumberMilestone(
         ClassicHardforkId.CLASSIC_TANGERINE_WHISTLE,
-        config.getEcip1015BlockNumber(),
+        getEcip1015BlockNumber(config),
         () ->
             tangerineWhistleDefinition(
                 config,
@@ -60,7 +72,7 @@ public class ClassicProtocolSpecProvider implements ProtocolSpecProvider {
 
     registry.addBlockNumberMilestone(
         ClassicHardforkId.DIE_HARD,
-        config.getDieHardBlockNumber(),
+        getDieHardBlockNumber(config),
         () ->
             ClassicProtocolSpecs.dieHardDefinition(
                 chainId,
@@ -72,7 +84,7 @@ public class ClassicProtocolSpecProvider implements ProtocolSpecProvider {
 
     registry.addBlockNumberMilestone(
         ClassicHardforkId.GOTHAM,
-        config.getGothamBlockNumber(),
+        getGothamBlockNumber(config),
         () ->
             ClassicProtocolSpecs.gothamDefinition(
                 chainId,
@@ -84,7 +96,7 @@ public class ClassicProtocolSpecProvider implements ProtocolSpecProvider {
 
     registry.addBlockNumberMilestone(
         ClassicHardforkId.DEFUSE_DIFFICULTY_BOMB,
-        config.getDefuseDifficultyBombBlockNumber(),
+        getDefuseDifficultyBombBlockNumber(config),
         () ->
             ClassicProtocolSpecs.defuseDifficultyBombDefinition(
                 chainId,
@@ -96,7 +108,7 @@ public class ClassicProtocolSpecProvider implements ProtocolSpecProvider {
 
     registry.addBlockNumberMilestone(
         ClassicHardforkId.ATLANTIS,
-        config.getAtlantisBlockNumber(),
+        getAtlantisBlockNumber(config),
         () ->
             ClassicProtocolSpecs.atlantisDefinition(
                 chainId,
@@ -109,7 +121,7 @@ public class ClassicProtocolSpecProvider implements ProtocolSpecProvider {
 
     registry.addBlockNumberMilestone(
         ClassicHardforkId.AGHARTA,
-        config.getAghartaBlockNumber(),
+        getAghartaBlockNumber(config),
         () ->
             ClassicProtocolSpecs.aghartaDefinition(
                 chainId,
@@ -122,7 +134,7 @@ public class ClassicProtocolSpecProvider implements ProtocolSpecProvider {
 
     registry.addBlockNumberMilestone(
         ClassicHardforkId.PHOENIX,
-        config.getPhoenixBlockNumber(),
+        getPhoenixBlockNumber(config),
         () ->
             ClassicProtocolSpecs.phoenixDefinition(
                 chainId,
@@ -135,7 +147,7 @@ public class ClassicProtocolSpecProvider implements ProtocolSpecProvider {
 
     registry.addBlockNumberMilestone(
         ClassicHardforkId.THANOS,
-        config.getThanosBlockNumber(),
+        getThanosBlockNumber(config),
         () ->
             ClassicProtocolSpecs.thanosDefinition(
                 chainId,
@@ -148,7 +160,7 @@ public class ClassicProtocolSpecProvider implements ProtocolSpecProvider {
 
     registry.addBlockNumberMilestone(
         ClassicHardforkId.MAGNETO,
-        config.getMagnetoBlockNumber(),
+        getMagnetoBlockNumber(config),
         () ->
             ClassicProtocolSpecs.magnetoDefinition(
                 chainId,
@@ -161,7 +173,7 @@ public class ClassicProtocolSpecProvider implements ProtocolSpecProvider {
 
     registry.addBlockNumberMilestone(
         ClassicHardforkId.MYSTIQUE,
-        config.getMystiqueBlockNumber(),
+        getMystiqueBlockNumber(config),
         () ->
             ClassicProtocolSpecs.mystiqueDefinition(
                 chainId,
@@ -174,7 +186,7 @@ public class ClassicProtocolSpecProvider implements ProtocolSpecProvider {
 
     registry.addBlockNumberMilestone(
         ClassicHardforkId.SPIRAL,
-        config.getSpiralBlockNumber(),
+        getSpiralBlockNumber(config),
         () ->
             ClassicProtocolSpecs.spiralDefinition(
                 chainId,

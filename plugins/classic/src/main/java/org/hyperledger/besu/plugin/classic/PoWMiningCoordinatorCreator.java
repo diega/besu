@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.classic;
 
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getThanosBlockNumber;
+
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -78,7 +80,7 @@ public class PoWMiningCoordinatorCreator {
   }
 
   private static EpochCalculator createEpochCalculator(final GenesisConfigOptions config) {
-    if (config.getThanosBlockNumber().isPresent()) {
+    if (getThanosBlockNumber(config).isPresent()) {
       LOG.info("Thanos hard fork detected, using ECIP-1099 epoch calculator");
       return new EpochCalculator.Ecip1099EpochCalculator();
     }

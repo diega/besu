@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.classic.protocol;
 
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.powHasher;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getEcip1017EraRounds;
 import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.AGHARTA;
 import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.ATLANTIS;
 import static org.hyperledger.besu.plugin.classic.protocol.ClassicHardforkId.CLASSIC_RECOVERY_INIT;
@@ -160,7 +161,7 @@ public class ClassicProtocolSpecs {
                     blockReward,
                     miningBeneficiaryCalculator,
                     skipZeroBlockRewards,
-                    genesisConfigOptions.getEcip1017EraRounds(),
+                    getEcip1017EraRounds(genesisConfigOptions),
                     protocolSchedule,
                     balConfig))
         .hardforkId(GOTHAM);

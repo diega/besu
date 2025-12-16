@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.classic.peervalidation;
 
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getClassicForkBlock;
+
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
@@ -29,7 +31,7 @@ public class ClassicPeerValidatorProvider implements PeerValidatorProvider {
       final ProtocolSchedule protocolSchedule,
       final PeerTaskExecutor peerTaskExecutor,
       final GenesisConfigOptions config) {
-    final OptionalLong classicBlock = config.getClassicForkBlock();
+    final OptionalLong classicBlock = getClassicForkBlock(config);
     if (classicBlock.isPresent()) {
       return new ClassicForkPeerValidator(
           protocolSchedule, peerTaskExecutor, classicBlock.getAsLong());

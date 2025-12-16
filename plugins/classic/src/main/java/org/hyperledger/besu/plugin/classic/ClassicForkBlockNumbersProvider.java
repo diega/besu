@@ -14,6 +14,18 @@
  */
 package org.hyperledger.besu.plugin.classic;
 
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getAghartaBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getAtlantisBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getDefuseDifficultyBombBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getDieHardBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getEcip1015BlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getGothamBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getMagnetoBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getMystiqueBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getPhoenixBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getSpiralBlockNumber;
+import static org.hyperledger.besu.plugin.classic.config.ClassicGenesisConfigHelper.getThanosBlockNumber;
+
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.forkid.ForkBlockNumbersProvider;
 
@@ -31,17 +43,17 @@ public class ClassicForkBlockNumbersProvider implements ForkBlockNumbersProvider
 
     // Note: classicForkBlock is not included as it marks when Ethereum forked away,
     // not an actual protocol change in the original chain
-    addIfPresent(forks, config.getEcip1015BlockNumber());
-    addIfPresent(forks, config.getDieHardBlockNumber());
-    addIfPresent(forks, config.getGothamBlockNumber());
-    addIfPresent(forks, config.getDefuseDifficultyBombBlockNumber());
-    addIfPresent(forks, config.getAtlantisBlockNumber());
-    addIfPresent(forks, config.getAghartaBlockNumber());
-    addIfPresent(forks, config.getPhoenixBlockNumber());
-    addIfPresent(forks, config.getThanosBlockNumber());
-    addIfPresent(forks, config.getMagnetoBlockNumber());
-    addIfPresent(forks, config.getMystiqueBlockNumber());
-    addIfPresent(forks, config.getSpiralBlockNumber());
+    addIfPresent(forks, getEcip1015BlockNumber(config));
+    addIfPresent(forks, getDieHardBlockNumber(config));
+    addIfPresent(forks, getGothamBlockNumber(config));
+    addIfPresent(forks, getDefuseDifficultyBombBlockNumber(config));
+    addIfPresent(forks, getAtlantisBlockNumber(config));
+    addIfPresent(forks, getAghartaBlockNumber(config));
+    addIfPresent(forks, getPhoenixBlockNumber(config));
+    addIfPresent(forks, getThanosBlockNumber(config));
+    addIfPresent(forks, getMagnetoBlockNumber(config));
+    addIfPresent(forks, getMystiqueBlockNumber(config));
+    addIfPresent(forks, getSpiralBlockNumber(config));
 
     return forks;
   }
