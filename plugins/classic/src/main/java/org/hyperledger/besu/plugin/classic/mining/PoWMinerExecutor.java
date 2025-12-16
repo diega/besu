@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.blockcreation.CoinbaseNotSetException;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.RandomNonceGenerator;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
-import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -39,6 +38,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
   protected final EpochCalculator epochCalculator;
   private final long powJobTimeToLive;
   private final int maxOmmersDepth;
+  private Subscribers<PoWObserver> ethHashObservers = Subscribers.create();
 
   public PoWMinerExecutor(
       final ProtocolContext protocolContext,
@@ -65,22 +65,22 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     this.maxOmmersDepth = maxOmmersDepth;
   }
 
+  public void setEthHashObservers(final Subscribers<PoWObserver> ethHashObservers) {
+    this.ethHashObservers = ethHashObservers;
+  }
+
   @Override
   public Optional<PoWBlockMiner> startAsyncMining(
-      final Subscribers<MinedBlockObserver> observers,
-      final Subscribers<PoWObserver> ethHashObservers,
-      final BlockHeader parentHeader) {
+      final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
     if (miningConfiguration.getCoinbase().isEmpty()) {
       throw new CoinbaseNotSetException("Unable to start mining without a coinbase.");
     }
-    return super.startAsyncMining(observers, ethHashObservers, parentHeader);
+    return super.startAsyncMining(observers, parentHeader);
   }
 
   @Override
   public PoWBlockMiner createMiner(
-      final Subscribers<MinedBlockObserver> observers,
-      final Subscribers<PoWObserver> ethHashObservers,
-      final BlockHeader parentHeader) {
+      final Subscribers<MinedBlockObserver> observers, final BlockHeader parentHeader) {
     // We don't need to consider the timestamp when getting the protocol schedule for the next block
     // as timestamps are not used for defining forks when using POW
     final ProtocolSpec nextBlockProtocolSpec =

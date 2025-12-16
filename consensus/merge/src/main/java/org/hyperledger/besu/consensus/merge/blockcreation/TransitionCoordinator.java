@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -127,11 +126,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   public Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp) {
     return dispatchFunctionAccordingToMergeState(
         (MiningCoordinator coordinator) -> coordinator.createBlock(parentHeader, timestamp));
-  }
-
-  @Override
-  public void addEthHashObserver(final PoWObserver observer) {
-    miningCoordinator.addEthHashObserver(observer);
   }
 
   @Override

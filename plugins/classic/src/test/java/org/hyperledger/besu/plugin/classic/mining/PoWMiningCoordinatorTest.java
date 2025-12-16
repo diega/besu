@@ -70,7 +70,7 @@ public class PoWMiningCoordinatorTest {
 
     when(miner.getHashesPerSecond()).thenReturn(hashRate1, hashRate2, hashRate3);
 
-    when(executor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(miner));
+    when(executor.startAsyncMining(any(), any())).thenReturn(Optional.of(miner));
 
     final PoWMiningCoordinator miningCoordinator =
         new PoWMiningCoordinator(

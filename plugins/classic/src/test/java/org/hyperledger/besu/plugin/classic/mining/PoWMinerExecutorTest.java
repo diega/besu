@@ -71,7 +71,7 @@ public class PoWMinerExecutorTest {
             PoWMiningCLIOptions.DEFAULT_MAX_OMMERS_DEPTH);
 
     assertThatExceptionOfType(CoinbaseNotSetException.class)
-        .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), Subscribers.none(), null))
+        .isThrownBy(() -> executor.startAsyncMining(Subscribers.create(), null))
         .withMessageContaining("Unable to start mining without a coinbase.");
   }
 

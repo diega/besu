@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
-import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +43,7 @@ public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMine
   private static final Logger LOG = LoggerFactory.getLogger(PoWMiningCoordinator.class);
 
   private final PoWMinerExecutor executor;
+  private final Subscribers<PoWObserver> ethHashObservers = Subscribers.create();
 
   private final Cache<String, Long> sealerHashRate;
 
@@ -56,11 +57,16 @@ public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMine
       final long remoteSealersTimeToLive) {
     super(blockchain, executor, syncState);
     this.executor = executor;
+    this.executor.setEthHashObservers(ethHashObservers);
     this.sealerHashRate =
         CacheBuilder.newBuilder()
             .maximumSize(remoteSealersLimit)
             .expireAfterWrite(remoteSealersTimeToLive, TimeUnit.MINUTES)
             .build();
+  }
+
+  public void addEthHashObserver(final PoWObserver observer) {
+    ethHashObservers.subscribe(observer);
   }
 
   @Override
@@ -118,12 +124,10 @@ public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMine
     executor.changeTargetGasLimit(targetGasLimit);
   }
 
-  @Override
   public Optional<PoWSolverInputs> getWorkDefinition() {
     return currentRunningMiner.flatMap(PoWBlockMiner::getWorkDefinition);
   }
 
-  @Override
   public boolean submitWork(final PoWSolution solution) {
     synchronized (this) {
       return currentRunningMiner.map(miner -> miner.submitWork(solution)).orElse(false);
