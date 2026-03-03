@@ -162,6 +162,7 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.BlockSimulationService;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.NetworkProvider;
 import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
@@ -453,7 +454,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--sync-mode"},
       paramLabel = MANDATORY_MODE_FORMAT_HELP,
       description =
-          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: SNAP if a --network is supplied. FULL otherwise.)")
+          "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} "
+              + "(default: SNAP if selected network supports snap sync. FULL otherwise.)")
   private SyncMode syncMode = null;
 
   @Option(
@@ -464,6 +466,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Integer syncMinPeerCount = SYNC_MIN_PEER_COUNT;
 
   private NetworkDefinition network = null;
+  private String pendingNetworkName = null;
+  private BigInteger pluginNetworkId = null;
+  private boolean pluginNetworkCanSnapSync = false;
 
   @Option(
       names = {"--network"},
@@ -479,10 +484,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         Arrays.stream(NetworkDefinition.values())
             .filter(nd -> nd.name().toLowerCase(Locale.ROOT).equals(normalizedInputNetwork))
             .findAny()
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Network %s does not exist".formatted(inputNetwork)));
+            .orElse(null);
+    this.pluginNetworkId = null;
+    this.pluginNetworkCanSnapSync = false;
+    if (this.network == null) {
+      this.pendingNetworkName = inputNetwork;
+    } else {
+      this.pendingNetworkName = null;
+    }
   }
 
   @Option(
@@ -968,7 +977,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       initialProcess();
 
-      if (network.equals(EPHEMERY)) {
+      if (EPHEMERY.equals(network)) {
         long lastGenesisTimestamp = parseLong(genesisConfigOverrides.get("timestamp"));
         runner.scheduleEphemeryRestart(this, lastGenesisTimestamp);
       }
@@ -987,7 +996,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @throws Exception if startup fails
    */
   public void initialProcess() throws Exception {
-    if (network.equals(EPHEMERY)) {
+    if (EPHEMERY.equals(network)) {
       genesisConfigSupplier = Suppliers.memoize(this::readGenesisConfig);
       if (BigInteger.ZERO.equals(ephemeryNextCycleId)) {
         ephemeryNextCycleId = genesisConfigSupplier.get().getConfigOptions().getChainId().get();
@@ -1711,7 +1720,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private GenesisConfig readGenesisConfig() {
     GenesisConfig effectiveGenesisFile;
     effectiveGenesisFile =
-        network.equals(EPHEMERY)
+        EPHEMERY.equals(network)
             ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
             : genesisFile != null
                 ? GenesisConfig.fromConfig(loadAndTransformGenesisFile(genesisFile))
@@ -1982,6 +1991,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     engineRPCConfig = engineRPCOptions.toDomainObject();
     checkPortClash();
     checkIfRequiredPortsAreAvailable();
+
+    // Resolve plugin-provided network before computing default sync mode
+    if (network == null && pendingNetworkName != null) {
+      resolvePluginNetwork(pendingNetworkName);
+    }
+
     syncMode = getDefaultSyncModeIfNotSet();
     versionCompatibilityProtection = getDefaultVersionCompatibilityProtectionIfNotSet();
 
@@ -2035,6 +2050,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     logger.info(generateConfigurationOverview());
     logger.info("Security Module: {}", securityModuleName);
+  }
+
+  private void resolvePluginNetwork(final String networkName) {
+    final Optional<NetworkProvider> providerOpt =
+        besuPluginContext.getService(NetworkProvider.class);
+    if (providerOpt.isEmpty()) {
+      throw new ParameterException(commandLine, "Network %s does not exist".formatted(networkName));
+    }
+    final NetworkProvider provider = providerOpt.get();
+    if (provider.supportedNetworks().stream().noneMatch(n -> n.equalsIgnoreCase(networkName))) {
+      throw new ParameterException(commandLine, "Network %s does not exist".formatted(networkName));
+    }
+    // Replace genesis supplier with plugin-provided genesis
+    this.genesisConfigSupplier =
+        Suppliers.memoize(() -> GenesisConfig.fromSource(provider.genesisConfig(networkName)));
+    this.pluginNetworkId = provider.networkId(networkName);
+    this.pluginNetworkCanSnapSync = provider.canSnapSync(networkName);
   }
 
   private static void configureVertxJsonDecodingMaxLength(final int maxStringLength) {
@@ -2483,8 +2515,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private EthNetworkConfig updateNetworkConfig(final NetworkDefinition network) {
-    final EthNetworkConfig.Builder builder =
-        new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network));
+    final EthNetworkConfig.Builder builder;
+    if (network != null) {
+      builder = new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network));
+    } else {
+      // Plugin network: use MAINNET as base; genesis is overwritten below via genesisConfigSupplier
+      builder = new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET));
+    }
 
     if (genesisFile != null) {
       if (commandLine.getParseResult().hasMatchedOption("network")) {
@@ -2522,17 +2559,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (networkId != null) {
       builder.setNetworkId(networkId);
+    } else if (pluginNetworkId != null) {
+      builder.setNetworkId(pluginNetworkId);
     }
     // ChainId update is required for Ephemery network
-    if (network.equals(EPHEMERY)) {
+    if (EPHEMERY.equals(network)) {
       String chainId = genesisConfigOverrides.get("chainId");
       builder.setNetworkId(new BigInteger(chainId));
     }
     if (p2PDiscoveryOptions.discoveryDnsUrl != null) {
       builder.setDnsDiscoveryUrl(p2PDiscoveryOptions.discoveryDnsUrl);
     } else {
+      // Read discovery options directly from genesisConfigSupplier (not the memoized options
+      // supplier) because for plugin-provided networks, genesisConfigSupplier is replaced after
+      // the memoized options supplier may have already cached the default mainnet config.
       final Optional<String> discoveryDnsUrlFromGenesis =
-          genesisConfigOptionsSupplier.get().getDiscoveryOptions().getDiscoveryDnsUrl();
+          genesisConfigSupplier.get().getConfigOptions().getDiscoveryOptions().getDiscoveryDnsUrl();
       discoveryDnsUrlFromGenesis.ifPresent(builder::setDnsDiscoveryUrl);
     }
 
@@ -2551,7 +2593,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     } else {
       final Optional<List<String>> bootNodesFromGenesis =
-          genesisConfigOptionsSupplier.get().getDiscoveryOptions().getBootNodes();
+          genesisConfigSupplier.get().getConfigOptions().getDiscoveryOptions().getBootNodes();
       if (bootNodesFromGenesis.isPresent()) {
         listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
       }
@@ -2842,14 +2884,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SyncMode getDefaultSyncModeIfNotSet() {
+    final boolean selectedNetworkCanSnapSync =
+        Optional.ofNullable(network).map(NetworkDefinition::canSnapSync).orElse(false)
+            || pluginNetworkCanSnapSync;
     return Optional.ofNullable(syncMode)
-        .orElse(
-            genesisFile == null
-                    && Optional.ofNullable(network)
-                        .map(NetworkDefinition::canSnapSync)
-                        .orElse(false)
-                ? SyncMode.SNAP
-                : SyncMode.FULL);
+        .orElse(genesisFile == null && selectedNetworkCanSnapSync ? SyncMode.SNAP : SyncMode.FULL);
   }
 
   private Boolean getDefaultVersionCompatibilityProtectionIfNotSet() {

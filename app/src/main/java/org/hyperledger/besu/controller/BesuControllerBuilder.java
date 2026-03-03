@@ -108,6 +108,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.ForkIdProvider;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -703,11 +704,22 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
     final Supplier<ProtocolSpec> currentProtocolSpecSupplier =
         () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
+    final BigInteger chainId = genesisConfigOptions.getChainId().orElse(BigInteger.ZERO);
+    final Optional<ForkIdProvider> forkIdProvider =
+        besuComponent
+            .map(BesuComponent::getBesuPluginContext)
+            .flatMap(sm -> sm.getService(ForkIdProvider.class))
+            .filter(provider -> provider.supportsChainId(chainId));
+    final List<Long> forkBlockNumbers =
+        forkIdProvider
+            .map(p -> p.getForkBlockNumbers(chainId))
+            .orElseGet(genesisConfigOptions::getForkBlockNumbers);
+    final List<Long> forkTimestamps =
+        forkIdProvider
+            .map(p -> p.getForkTimestamps(chainId))
+            .orElseGet(genesisConfigOptions::getForkBlockTimestamps);
     final ForkIdManager forkIdManager =
-        new ForkIdManager(
-            blockchain,
-            genesisConfigOptions.getForkBlockNumbers(),
-            genesisConfigOptions.getForkBlockTimestamps());
+        new ForkIdManager(blockchain, forkBlockNumbers, forkTimestamps);
     final EthPeers ethPeers =
         new EthPeers(
             currentProtocolSpecSupplier,

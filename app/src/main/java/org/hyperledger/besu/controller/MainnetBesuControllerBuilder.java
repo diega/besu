@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
@@ -97,7 +98,8 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         badBlockManager,
         isParallelTxProcessingEnabled,
         balConfiguration,
-        metricsSystem);
+        metricsSystem,
+        besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null));
   }
 
   @Override

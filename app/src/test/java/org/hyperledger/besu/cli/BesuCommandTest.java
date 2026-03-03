@@ -67,6 +67,7 @@ import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -76,7 +77,9 @@ import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.NetworkProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
@@ -100,6 +103,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1823,6 +1828,115 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).contains("Network foo does not exist");
+  }
+
+  @Test
+  public void pluginNetworkWithoutProviderThrowsError() {
+    parseCommand("--network", "classic");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Network classic does not exist");
+  }
+
+  @Test
+  public void pluginNetworkDefaultsToSnapWhenProviderSupportsSnapSync() {
+    stubPluginNetworkProvider(true);
+
+    parseCommand("--network", "classic");
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
+
+    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.SNAP);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void pluginNetworkDefaultsToFullWhenProviderDoesNotSupportSnapSync() {
+    stubPluginNetworkProvider(false);
+
+    parseCommand("--network", "classic");
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
+
+    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FULL);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void classicNetworkDefaultsEthCapabilityToEth68() {
+    stubClassicNetworkProvider(true, OptionalInt.of(68));
+
+    parseCommand("--network", "classic");
+
+    final ArgumentCaptor<EthProtocolConfiguration> ethProtocolConfigurationCaptor =
+        ArgumentCaptor.forClass(EthProtocolConfiguration.class);
+    verify(mockControllerBuilder)
+        .ethProtocolConfiguration(ethProtocolConfigurationCaptor.capture());
+
+    assertThat(ethProtocolConfigurationCaptor.getValue().getMaxEthCapability()).isEqualTo(68);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void classicNetworkAllowsMoreRestrictiveEthCapabilityFromCli() {
+    stubClassicNetworkProvider(true, OptionalInt.of(68));
+
+    parseCommand("--network", "classic", "--Xeth-capability-max", "67");
+
+    final ArgumentCaptor<EthProtocolConfiguration> ethProtocolConfigurationCaptor =
+        ArgumentCaptor.forClass(EthProtocolConfiguration.class);
+    verify(mockControllerBuilder)
+        .ethProtocolConfiguration(ethProtocolConfigurationCaptor.capture());
+
+    assertThat(ethProtocolConfigurationCaptor.getValue().getMaxEthCapability()).isEqualTo(67);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void classicNetworkClampsEthCapabilityAboveEth68() {
+    stubClassicNetworkProvider(true, OptionalInt.of(68));
+
+    parseCommand("--network", "classic", "--Xeth-capability-max", "69");
+
+    final ArgumentCaptor<EthProtocolConfiguration> ethProtocolConfigurationCaptor =
+        ArgumentCaptor.forClass(EthProtocolConfiguration.class);
+    verify(mockControllerBuilder)
+        .ethProtocolConfiguration(ethProtocolConfigurationCaptor.capture());
+
+    assertThat(ethProtocolConfigurationCaptor.getValue().getMaxEthCapability()).isEqualTo(68);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void classicNetworkRejectsEthCapabilityMinAboveEth68() {
+    stubClassicNetworkProvider(true, OptionalInt.of(68));
+
+    parseCommand("--network", "classic", "--Xeth-capability-min", "69");
+
+    verify(mockControllerBuilder, never()).build();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Network classic only supports eth/68 and lower");
+  }
+
+  private void stubPluginNetworkProvider(final boolean canSnapSync) {
+    stubClassicNetworkProvider(canSnapSync, OptionalInt.empty());
+  }
+
+  private void stubClassicNetworkProvider(
+      final boolean canSnapSync, final OptionalInt maxSupportedEthCapability) {
+    final NetworkProvider provider = org.mockito.Mockito.mock(NetworkProvider.class);
+
+    org.mockito.Mockito.doReturn(Optional.of(commonPluginConfiguration))
+        .when(getBesuPluginContext())
+        .getService(BesuConfigurationImpl.class);
+    org.mockito.Mockito.doReturn(Optional.of(provider))
+        .when(getBesuPluginContext())
+        .getService(NetworkProvider.class);
+    org.mockito.Mockito.when(provider.supportedNetworks()).thenReturn(Set.of("classic"));
+    org.mockito.Mockito.when(provider.genesisConfig("classic"))
+        .thenReturn(Resources.getResource("mainnet.json"));
+    org.mockito.Mockito.when(provider.networkId("classic")).thenReturn(BigInteger.valueOf(61));
+    org.mockito.Mockito.when(provider.canSnapSync("classic")).thenReturn(canSnapSync);
+    org.mockito.Mockito.when(provider.maxSupportedEthCapability("classic"))
+        .thenReturn(maxSupportedEthCapability);
   }
 
   @Test

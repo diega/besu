@@ -117,6 +117,7 @@ import org.hyperledger.besu.nat.docker.DockerNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.ForkIdProvider;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
@@ -125,6 +126,7 @@ import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -695,6 +697,8 @@ public class RunnerBuilder {
             .orElse(defaultPeerPermissions);
 
     final EthPeers ethPeers = besuController.getEthPeers();
+    final BigInteger chainId =
+        besuController.getGenesisConfigOptions().getChainId().orElse(BigInteger.ZERO);
 
     LOG.info("Detecting NAT service.");
     final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;
@@ -711,8 +715,18 @@ public class RunnerBuilder {
             .metricsSystem(metricsSystem)
             .storageProvider(storageProvider)
             .blockchain(context.getBlockchain())
-            .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
-            .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
+            .blockNumberForks(
+                Optional.ofNullable(besuPluginContext)
+                    .flatMap(ctx -> ctx.getService(ForkIdProvider.class))
+                    .filter(provider -> provider.supportsChainId(chainId))
+                    .map(provider -> provider.getForkBlockNumbers(chainId))
+                    .orElseGet(besuController.getGenesisConfigOptions()::getForkBlockNumbers))
+            .timestampForks(
+                Optional.ofNullable(besuPluginContext)
+                    .flatMap(ctx -> ctx.getService(ForkIdProvider.class))
+                    .filter(provider -> provider.supportsChainId(chainId))
+                    .map(provider -> provider.getForkTimestamps(chainId))
+                    .orElseGet(besuController.getGenesisConfigOptions()::getForkBlockTimestamps))
             .build();
 
     RlpxAgentFactory rlpxAgentFactory =
