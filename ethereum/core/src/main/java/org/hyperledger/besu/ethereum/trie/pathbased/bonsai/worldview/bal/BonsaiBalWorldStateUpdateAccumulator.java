@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator
 import org.hyperledger.besu.ethereum.trie.pathbased.common.code.PathBasedCodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedValue;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -48,17 +47,20 @@ public class BonsaiBalWorldStateUpdateAccumulator extends BonsaiWorldStateUpdate
     this.blockAccessListOverlay = blockAccessListOverlay;
   }
 
+  /** Copy constructor. */
+  protected BonsaiBalWorldStateUpdateAccumulator(
+      final BonsaiBalWorldStateUpdateAccumulator source) {
+    super(source);
+    this.blockAccessListOverlay = source.blockAccessListOverlay;
+  }
+
   public BlockAccessListOverlay getBlockAccessListOverlay() {
     return blockAccessListOverlay;
   }
 
   @Override
-  public PathBasedWorldStateUpdateAccumulator<BonsaiAccount> copy() {
-    final BonsaiBalWorldStateUpdateAccumulator copy =
-        new BonsaiBalWorldStateUpdateAccumulator(
-            wrappedWorldView(), getEvmConfiguration(), codeCache(), blockAccessListOverlay);
-    copy.cloneFromUpdater(this);
-    return copy;
+  public BonsaiBalWorldStateUpdateAccumulator copy() {
+    return new BonsaiBalWorldStateUpdateAccumulator(this);
   }
 
   @Override
