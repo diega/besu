@@ -29,8 +29,11 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.MUIR_G
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PETERSBURG;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SPURIOUS_DRAGON;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.TANGERINE_WHISTLE;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -38,6 +41,10 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
+
+import java.util.Map;
+import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -153,6 +160,81 @@ public class MainnetProtocolScheduleTest {
                     false,
                     BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()));
+  }
+
+  @Test
+  public void protocolScheduleCustomizerAppliesAdaptersWithFloorSemantics() {
+    // Frontier from block 0, Byzantium from block 16.
+    final String json = "{\"config\": {\"byzantiumBlock\": 16, \"chainId\": 1234}}";
+    final Wei customReward = Wei.of(42);
+
+    final ProtocolSchedule baseline = scheduleFromConfig(json, Optional.empty());
+
+    final ProtocolScheduleCustomizer customizer =
+        config -> Map.of(16L, builder -> builder.blockReward(customReward));
+    final ServiceManager serviceManager = mock(ServiceManager.class);
+    when(serviceManager.getService(ProtocolScheduleCustomizer.class))
+        .thenReturn(Optional.of(customizer));
+    final ProtocolSchedule customized = scheduleFromConfig(json, Optional.of(serviceManager));
+
+    // Below the adapter's floor block the protocol spec is left untouched.
+    Assertions.assertThat(customized.getByBlockHeader(blockHeader(1L)).getBlockReward())
+        .isEqualTo(baseline.getByBlockHeader(blockHeader(1L)).getBlockReward());
+    // At and after the adapter's floor block the customizer's change applies.
+    Assertions.assertThat(customized.getByBlockHeader(blockHeader(16L)).getBlockReward())
+        .isEqualTo(customReward)
+        .isNotEqualTo(baseline.getByBlockHeader(blockHeader(16L)).getBlockReward());
+    Assertions.assertThat(customized.getByBlockHeader(blockHeader(100L)).getBlockReward())
+        .isEqualTo(customReward);
+  }
+
+  @Test
+  public void protocolScheduleCustomizerIsOptional() {
+    // No plugin context registered builds the stock mainnet schedule.
+    final ProtocolSchedule sched = scheduleFromConfig("{}", Optional.empty());
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getHardforkId())
+        .isEqualTo(FRONTIER);
+  }
+
+  @Test
+  public void protocolScheduleCustomizerAbsentFromManagerIsStock() {
+    // A registered service manager without a ProtocolScheduleCustomizer builds the stock schedule.
+    final ServiceManager serviceManager = mock(ServiceManager.class);
+    when(serviceManager.getService(ProtocolScheduleCustomizer.class)).thenReturn(Optional.empty());
+
+    final ProtocolSchedule sched = scheduleFromConfig("{}", Optional.of(serviceManager));
+    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getHardforkId())
+        .isEqualTo(FRONTIER);
+  }
+
+  @Test
+  public void protocolScheduleCustomizerWithNoAdaptersIsStock() {
+    // A customizer that contributes an empty map leaves the schedule unchanged.
+    final String json = "{\"config\": {\"byzantiumBlock\": 16, \"chainId\": 1234}}";
+    final ProtocolSchedule baseline = scheduleFromConfig(json, Optional.empty());
+
+    final ProtocolScheduleCustomizer customizer = config -> Map.of();
+    final ServiceManager serviceManager = mock(ServiceManager.class);
+    when(serviceManager.getService(ProtocolScheduleCustomizer.class))
+        .thenReturn(Optional.of(customizer));
+    final ProtocolSchedule customized = scheduleFromConfig(json, Optional.of(serviceManager));
+
+    Assertions.assertThat(customized.getByBlockHeader(blockHeader(16L)).getBlockReward())
+        .isEqualTo(baseline.getByBlockHeader(blockHeader(16L)).getBlockReward());
+  }
+
+  private ProtocolSchedule scheduleFromConfig(
+      final String json, final Optional<ServiceManager> serviceManager) {
+    return MainnetProtocolSchedule.fromConfig(
+        GenesisConfig.fromConfig(json).getConfigOptions(),
+        Optional.empty(),
+        Optional.of(EvmConfiguration.DEFAULT),
+        MiningConfiguration.MINING_DISABLED,
+        new BadBlockManager(),
+        false,
+        BalConfiguration.DEFAULT,
+        new NoOpMetricsSystem(),
+        serviceManager);
   }
 
   private BlockHeader blockHeader(final long number) {
