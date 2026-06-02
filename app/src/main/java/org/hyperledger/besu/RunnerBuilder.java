@@ -119,6 +119,7 @@ import org.hyperledger.besu.nat.docker.DockerNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.ForkIdProvider;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
@@ -765,6 +766,11 @@ public class RunnerBuilder {
             .orElse(defaultPeerPermissions);
 
     final EthPeers ethPeers = besuController.getEthPeers();
+    final ForkIdResolver forks =
+        new ForkIdResolver(
+            Optional.ofNullable(besuPluginContext)
+                .flatMap(ctx -> ctx.getService(ForkIdProvider.class)),
+            besuController.getGenesisConfigOptions());
 
     LOG.info("Detecting NAT service.");
     final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;
@@ -781,8 +787,8 @@ public class RunnerBuilder {
             .metricsSystem(metricsSystem)
             .storageProvider(storageProvider)
             .blockchain(context.getBlockchain())
-            .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
-            .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
+            .blockNumberForks(forks.blockNumberForks())
+            .timestampForks(forks.timestampForks())
             .build();
 
     RlpxAgentFactory rlpxAgentFactory =
