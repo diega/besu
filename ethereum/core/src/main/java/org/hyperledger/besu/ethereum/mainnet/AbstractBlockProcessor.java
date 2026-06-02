@@ -85,7 +85,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
-  final Wei blockReward;
+  protected final Wei blockReward;
 
   protected final boolean skipZeroBlockRewards;
   private final ProtocolSchedule protocolSchedule;
@@ -642,7 +642,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     return miningBeneficiaryCalculator;
   }
 
-  abstract boolean rewardCoinbase(
+  protected abstract boolean rewardCoinbase(
       final MutableWorldState worldState,
       final BlockHeader header,
       final List<BlockHeader> ommers,

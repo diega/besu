@@ -69,12 +69,12 @@ public final class MainnetBlockHeaderValidator {
                 "extraData", BlockHeader::getExtraData, DAO_EXTRA_DATA));
   }
 
-  static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator() {
+  public static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator() {
     return createLegacyFeeMarketOmmerValidator(
         new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
   }
 
-  static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator(
+  public static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator(
       final EpochCalculator epochCalculator, final PoWHasher hasher) {
     return new BlockHeaderValidator.Builder()
         .addRule(CalculatedDifficultyValidationRule::new)
