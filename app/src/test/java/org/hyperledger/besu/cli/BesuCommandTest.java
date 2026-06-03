@@ -622,6 +622,30 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(2023));
   }
 
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "mainnet",
+        "sepolia",
+        "hoodi",
+        "linea_mainnet",
+        "linea_sepolia",
+        "lukso",
+        "dev",
+        "future_eips",
+        "experimental_eips"
+      })
+  public void builtInNetworkResolvesToItsNetworkId(final String networkName) {
+    parseCommand("--network", networkName);
+
+    verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
+    final NetworkDefinition expected =
+        NetworkDefinition.valueOf(networkName.toUpperCase(Locale.ROOT));
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().networkId())
+        .isEqualTo(expected.getNetworkId());
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
   @Test
   public void genesisAndNetworkMustNotBeUsedTogether() throws Exception {
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);

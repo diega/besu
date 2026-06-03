@@ -73,7 +73,7 @@ public class PrunePreMergeBlockDataSubCommand implements Runnable {
 
   @Override
   public void run() {
-    final NetworkDefinition network = storageSubCommand.besuCommand.getNetwork();
+    final NetworkDefinition network = storageSubCommand.besuCommand.getNetwork().orElse(null);
     final Path dataPath = storageSubCommand.besuCommand.dataDir();
     if (!SUPPORTED_NETWORKS.contains(network)) {
       LOG.error(

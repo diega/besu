@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.NetworkSpec;
+
 import java.math.BigInteger;
+import java.net.URL;
 import java.util.Locale;
 import java.util.Optional;
 
 /** The enum Network name. */
-public enum NetworkDefinition {
+public enum NetworkDefinition implements NetworkSpec {
   /** Mainnet network name. */
   MAINNET(
       "/mainnet.json",
@@ -152,6 +155,11 @@ public enum NetworkDefinition {
     return genesisFile;
   }
 
+  @Override
+  public URL getGenesisConfigUrl() {
+    return NetworkDefinition.class.getResource(genesisFile);
+  }
+
   /**
    * Gets chain id.
    *
@@ -166,6 +174,7 @@ public enum NetworkDefinition {
    *
    * @return the network id
    */
+  @Override
   public BigInteger getNetworkId() {
     return BigInteger.valueOf(networkId);
   }
@@ -175,6 +184,7 @@ public enum NetworkDefinition {
    *
    * @return the boolean
    */
+  @Override
   public boolean canSnapSync() {
     return canSnapSync;
   }
