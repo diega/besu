@@ -415,7 +415,7 @@ public class BlocksSubCommand implements Runnable {
           .era1BlockExporterFactory
           .apply(
               controller.getProtocolContext().getBlockchain(),
-              parentCommand.parentCommand.getNetwork())
+              parentCommand.parentCommand.getNetwork().orElse(null))
           .export(
               getStartBlock().orElse(0L),
               getEndBlock()

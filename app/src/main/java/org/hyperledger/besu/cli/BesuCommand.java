@@ -107,6 +107,7 @@ import org.hyperledger.besu.cryptoservices.KeyPairSecurityModule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.NetworkSpec;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -345,6 +346,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Supplier<ApiConfiguration> apiConfigurationSupplier =
       Suppliers.memoize(this::getApiConfiguration);
 
+  /**
+   * The selected network, resolved once on first use (always after plugins are registered). Built
+   * by matching {@link #requestedNetwork} against the built-in {@link NetworkDefinition} values.
+   */
+  private final Supplier<NetworkSpec> networkSupplier = Suppliers.memoize(this::resolveNetwork);
+
   private RocksDBPlugin rocksDBPlugin;
   private LivenessCheckPlugin livenessCheckPlugin;
   private ReadinessCheckPlugin readinessCheckPlugin;
@@ -464,8 +471,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Minimum number of peers required before starting sync. Has effect only on non-PoS networks. (default: ${DEFAULT-VALUE})")
   private final Integer syncMinPeerCount = SYNC_MIN_PEER_COUNT;
 
-  private NetworkDefinition network = null;
-
   @Option(
       names = {"--network"},
       paramLabel = MANDATORY_NETWORK_FORMAT_HELP,
@@ -473,18 +478,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
               + " (default: ${DEFAULT-VALUE})")
-  void setNetwork(final String inputNetwork) {
-    // case-insensitive and (_,-)-insensitive
-    final var normalizedInputNetwork = inputNetwork.toLowerCase(Locale.ROOT).replace('-', '_');
-    this.network =
-        Arrays.stream(NetworkDefinition.values())
-            .filter(nd -> nd.name().toLowerCase(Locale.ROOT).equals(normalizedInputNetwork))
-            .findAny()
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Network %s does not exist".formatted(inputNetwork)));
-  }
+  private String requestedNetwork;
 
   @Option(
       names = {PROFILE_OPTION_NAME},
@@ -963,6 +957,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Override
   public void run() {
+    final NetworkDefinition network = getNetwork().orElse(null);
     if (network != null && network.isDeprecated()) {
       logger.warn(NetworkDeprecationMessage.generate(network));
     }
@@ -989,7 +984,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       initialProcess();
 
-      if (network.equals(EPHEMERY)) {
+      if (EPHEMERY.equals(networkSupplier.get())) {
         long lastGenesisTimestamp = parseLong(genesisConfigOverrides.get("timestamp"));
         runner.scheduleEphemeryRestart(this, lastGenesisTimestamp);
       }
@@ -1008,7 +1003,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @throws Exception if startup fails
    */
   public void initialProcess() throws Exception {
-    if (network.equals(EPHEMERY)) {
+    if (EPHEMERY.equals(networkSupplier.get())) {
       genesisConfigSupplier = Suppliers.memoize(this::readGenesisConfig);
       if (BigInteger.ZERO.equals(ephemeryNextCycleId)) {
         ephemeryNextCycleId = genesisConfigSupplier.get().getConfigOptions().getChainId().get();
@@ -1025,7 +1020,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // explicitly enabled, perform compatibility check
     VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
 
-    configureNativeLibs(Optional.ofNullable(network));
+    configureNativeLibs(getNetwork());
     if (enablePrecompileCaching) {
       configurePrecompileCaching();
     }
@@ -1702,18 +1697,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private GenesisConfig readGenesisConfig() {
     GenesisConfig effectiveGenesisFile;
     effectiveGenesisFile =
-        network.equals(EPHEMERY)
+        EPHEMERY.equals(networkSupplier.get())
             ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
             : genesisFile != null
                 ? GenesisConfig.fromConfig(loadAndTransformGenesisFile(genesisFile))
-                : GenesisConfig.fromResource(
-                    Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
+                : GenesisConfig.fromSource(networkSupplier.get().getGenesisConfigUrl());
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
   private GenesisConfigOptions readGenesisConfigOptions() {
     try {
       return genesisConfigSupplier.get().getConfigOptions();
+    } catch (final ParameterException e) {
+      // Already a well-formed CLI error (e.g. an unknown --network); don't mask it as a genesis
+      // load failure.
+      throw e;
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine, "Unable to load genesis file. " + e.getCause());
@@ -1959,7 +1957,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     syncMode = getDefaultSyncModeIfNotSet();
     versionCompatibilityProtection = getDefaultVersionCompatibilityProtectionIfNotSet();
 
-    ethNetworkConfig = updateNetworkConfig(network);
+    ethNetworkConfig = updateNetworkConfig(networkSupplier.get());
 
     jsonRpcConfiguration =
         jsonRpcHttpOptions.jsonRpcConfiguration(
@@ -2091,7 +2089,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     BesuControllerBuilder besuControllerBuilder =
         controllerBuilder
-            .fromEthNetworkConfig(updateNetworkConfig(network), getDefaultSyncModeIfNotSet())
+            .fromEthNetworkConfig(
+                updateNetworkConfig(networkSupplier.get()), getDefaultSyncModeIfNotSet())
             .synchronizerConfiguration(buildSyncConfig())
             .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
             .networkConfiguration(unstableNetworkingOptions.toDomainObject())
@@ -2347,13 +2346,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return dataStorageConfiguration;
   }
 
+  private NetworkSpec resolveNetwork() {
+    // A built-in NetworkDefinition is a NetworkSpec (widened on return).
+    return getNetwork()
+        .orElseThrow(
+            () ->
+                new ParameterException(
+                    commandLine, "Network %s does not exist".formatted(requestedNetwork)));
+  }
+
   /**
-   * Gets the network for this BesuCommand
+   * Gets the network for this BesuCommand: the requested network if it names a built-in one
+   * (matched case-insensitively), else empty.
    *
-   * @return the network for this BesuCommand
+   * @return the built-in network for this BesuCommand, or empty if it is not a built-in network
    */
-  public NetworkDefinition getNetwork() {
-    return network;
+  public Optional<NetworkDefinition> getNetwork() {
+    final String normalized = requestedNetwork.toLowerCase(Locale.ROOT).replace('-', '_');
+    return Arrays.stream(NetworkDefinition.values())
+        .filter(nd -> nd.name().toLowerCase(Locale.ROOT).equals(normalized))
+        .findAny();
   }
 
   private void initMiningParametersMetrics(final MiningConfiguration miningConfiguration) {
@@ -2476,7 +2488,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 "BesuCommand-Shutdown-Hook"));
   }
 
-  private EthNetworkConfig updateNetworkConfig(final NetworkDefinition network) {
+  private EthNetworkConfig updateNetworkConfig(final NetworkSpec network) {
     final EthNetworkConfig.Builder builder =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network));
 
@@ -2519,7 +2531,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setNetworkId(networkId);
     }
     // ChainId update is required for Ephemery network
-    if (network.equals(EPHEMERY)) {
+    if (EPHEMERY.equals(network)) {
       String chainId = genesisConfigOverrides.get("chainId");
       builder.setNetworkId(new BigInteger(chainId));
     }
@@ -2855,10 +2867,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private SyncMode getDefaultSyncModeIfNotSet() {
     return Optional.ofNullable(syncMode)
         .orElse(
-            genesisFile == null
-                    && Optional.ofNullable(network)
-                        .map(NetworkDefinition::canSnapSync)
-                        .orElse(false)
+            genesisFile == null && networkSupplier.get().canSnapSync()
                 ? SyncMode.SNAP
                 : SyncMode.FULL);
   }
@@ -2877,9 +2886,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setEnvironment(environment);
     }
 
-    if (network != null) {
-      builder.setNetwork(network.normalize());
-    }
+    getNetwork().ifPresent(nd -> builder.setNetwork(nd.normalize()));
 
     if (profile != null) {
       builder.setProfile(profile);
