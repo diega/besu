@@ -17,13 +17,13 @@ package org.hyperledger.besu.cli.config;
 import org.hyperledger.besu.config.DiscoveryOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.NetworkDefinition;
+import org.hyperledger.besu.datatypes.NetworkSpec;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
@@ -64,12 +64,11 @@ public record EthNetworkConfig(
   /**
    * Gets network config.
    *
-   * @param networkDefinition the network name
+   * @param networkSpec the network
    * @return the network config
    */
-  public static EthNetworkConfig getNetworkConfig(final NetworkDefinition networkDefinition) {
-    final URL genesisSource = jsonConfigSource(networkDefinition.getGenesisFile());
-    final GenesisConfig genesisConfig = GenesisConfig.fromSource(genesisSource);
+  public static EthNetworkConfig getNetworkConfig(final NetworkSpec networkSpec) {
+    final GenesisConfig genesisConfig = GenesisConfig.fromSource(networkSpec.getGenesisConfigUrl());
     final DiscoveryOptions discoveryOptions =
         genesisConfig.getConfigOptions().getDiscoveryOptions();
 
@@ -87,14 +86,10 @@ public record EthNetworkConfig(
 
     return new EthNetworkConfig(
         genesisConfig,
-        networkDefinition.getNetworkId(),
+        networkSpec.getNetworkId(),
         enodeBootNodes,
         enrBootNodes,
         discoveryOptions.getDiscoveryDnsUrl().orElse(null));
-  }
-
-  private static URL jsonConfigSource(final String resourceName) {
-    return EthNetworkConfig.class.getResource(resourceName);
   }
 
   /**
