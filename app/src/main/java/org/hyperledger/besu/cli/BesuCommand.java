@@ -160,6 +160,7 @@ import org.hyperledger.besu.metrics.vertx.VertxMetricsAdapterFactory;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.NetworkProvider;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
@@ -2304,8 +2305,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private NetworkSpec resolveNetwork() {
-    // A built-in NetworkDefinition is a NetworkSpec (widened on return).
-    return getNetwork()
+    final Optional<NetworkDefinition> builtIn = getNetwork();
+    if (builtIn.isPresent()) {
+      // A built-in NetworkDefinition is a NetworkSpec (widened on return).
+      return builtIn.get();
+    }
+    // Not a built-in name: consult plugin-provided networks (plugins are registered by now).
+    return besuPluginContext
+        .getService(NetworkProvider.class)
+        .flatMap(provider -> provider.findNetwork(requestedNetwork))
         .orElseThrow(
             () ->
                 new ParameterException(

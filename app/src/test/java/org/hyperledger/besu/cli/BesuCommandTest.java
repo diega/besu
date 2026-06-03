@@ -58,6 +58,7 @@ import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.NetworkSpec;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
@@ -75,7 +76,9 @@ import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.NetworkProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
@@ -114,6 +117,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
@@ -1880,6 +1884,88 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).contains("Network foo does not exist");
   }
+
+  @Test
+  public void pluginNetworkWithoutProviderThrowsError() {
+    parseCommand("--network", "examplenet");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Network examplenet does not exist");
+  }
+
+  @Test
+  public void pluginNetworkUnknownToProviderThrowsError() {
+    final NetworkProvider provider = registerNetworkProvider();
+    org.mockito.Mockito.when(provider.findNetwork(any())).thenReturn(Optional.empty());
+
+    parseCommand("--network", "examplenet");
+
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Network examplenet does not exist");
+  }
+
+  @ParameterizedTest
+  @CsvSource({"true, SNAP", "false, FULL"})
+  public void pluginNetworkSyncModeFollowsProviderSnapSupport(
+      final boolean canSnapSync, final SyncMode expectedSyncMode) {
+    stubPluginNetworkProvider(canSnapSync);
+
+    parseCommand("--network", "examplenet");
+    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
+
+    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(expectedSyncMode);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void pluginNetworkAppliesProviderNetworkId() {
+    stubPluginNetworkProvider(false);
+
+    parseCommand("--network", "examplenet");
+    verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
+
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().networkId())
+        .isEqualTo(BigInteger.valueOf(424242));
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void explicitNetworkIdOverridesPluginNetworkId() {
+    stubPluginNetworkProvider(false);
+
+    parseCommand("--network", "examplenet", "--network-id", "999");
+    verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
+
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().networkId())
+        .isEqualTo(BigInteger.valueOf(999));
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  private NetworkProvider registerNetworkProvider() {
+    final NetworkProvider provider = org.mockito.Mockito.mock(NetworkProvider.class);
+    org.mockito.Mockito.doReturn(Optional.of(commonPluginConfiguration))
+        .when(getBesuPluginContext())
+        .getService(BesuConfigurationImpl.class);
+    org.mockito.Mockito.doReturn(Optional.of(provider))
+        .when(getBesuPluginContext())
+        .getService(NetworkProvider.class);
+    return provider;
+  }
+
+  private void stubPluginNetworkProvider(final boolean canSnapSync) {
+    final NetworkProvider provider = registerNetworkProvider();
+    org.mockito.Mockito.when(provider.findNetwork("examplenet"))
+        .thenReturn(
+            Optional.of(
+                new TestNetworkSpec(
+                    BigInteger.valueOf(424242),
+                    Resources.getResource("mainnet.json"),
+                    canSnapSync)));
+  }
+
+  /** A simple {@link NetworkSpec} value standing in for a plugin-provided network. */
+  private record TestNetworkSpec(
+      BigInteger getNetworkId, URL getGenesisConfigUrl, boolean canSnapSync)
+      implements NetworkSpec {}
 
   @Test
   public void futureEipsValuesAreUsed() {
