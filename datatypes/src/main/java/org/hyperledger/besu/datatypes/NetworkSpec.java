@@ -19,7 +19,9 @@ import java.net.URL;
 
 /**
  * The static definition of a network: enough to seed network configuration — its network id,
- * genesis config URL and whether it supports snap sync.
+ * genesis config URL and whether it supports snap sync. Implemented both by Besu's built-in
+ * networks and by plugin-provided networks (via {@code NetworkProvider}), so the two can be handled
+ * uniformly.
  */
 public interface NetworkSpec {
 
