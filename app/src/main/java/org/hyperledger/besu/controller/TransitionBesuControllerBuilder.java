@@ -184,6 +184,10 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
+    // The plan is frozen by super.build() before this runs; share it with the sub-builders so the
+    // pre- and post-merge schedules both apply the plugin-contributed schedule effects.
+    preMergeBesuControllerBuilder.protocolSchedulePlan = protocolSchedulePlan;
+    mergeBesuControllerBuilder.protocolSchedulePlan = protocolSchedulePlan;
     transitionProtocolSchedule =
         new TransitionProtocolSchedule(
             preMergeBesuControllerBuilder.createProtocolSchedule(),

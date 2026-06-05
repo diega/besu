@@ -180,7 +180,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         isParallelTxProcessingEnabled,
         balConfiguration,
         metricsSystem,
-        evmConfiguration);
+        evmConfiguration,
+        protocolSchedulePlan.scheduleSpecAdapters());
   }
 
   @Override

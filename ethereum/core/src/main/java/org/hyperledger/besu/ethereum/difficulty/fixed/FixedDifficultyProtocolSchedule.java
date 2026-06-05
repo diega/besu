@@ -21,10 +21,14 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * A ProtocolSchedule which behaves similarly to pre-merge MainNet, but with a much reduced
@@ -41,13 +45,55 @@ public class FixedDifficultyProtocolSchedule {
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
+    return create(
+        config,
+        isRevertReasonEnabled,
+        evmConfiguration,
+        miningConfiguration,
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        balConfiguration,
+        metricsSystem,
+        new ProtocolSpecAdapters(new HashMap<>()));
+  }
+
+  /**
+   * Create a fixed-difficulty protocol schedule, folding in plugin-contributed spec adapters
+   * composed over the fixed-difficulty calculator.
+   *
+   * @param config the genesis config options
+   * @param isRevertReasonEnabled whether to store the revert reason
+   * @param evmConfiguration the evm configuration
+   * @param miningConfiguration the mining configuration
+   * @param badBlockManager the bad block manager
+   * @param isParallelTxProcessingEnabled whether parallel tx processing is enabled
+   * @param balConfiguration the block access list configuration
+   * @param metricsSystem the metrics system
+   * @param pluginSpecAdapters plugin-contributed spec adapters to fold into the schedule
+   * @return a configured fixed-difficulty protocol schedule
+   */
+  public static ProtocolSchedule create(
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem,
+      final ProtocolSpecAdapters pluginSpecAdapters) {
+    final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> modifiers = new HashMap<>();
+    modifiers.put(
+        0L, builder -> builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config)));
+    pluginSpecAdapters.stream()
+        .forEach(
+            entry ->
+                modifiers.merge(
+                    entry.getKey(), entry.getValue(), (base, next) -> base.andThen(next)));
     return new ProtocolScheduleBuilder(
             config,
             Optional.empty(),
-            ProtocolSpecAdapters.create(
-                0,
-                builder ->
-                    builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config))),
+            new ProtocolSpecAdapters(modifiers),
             isRevertReasonEnabled,
             evmConfiguration,
             miningConfiguration,

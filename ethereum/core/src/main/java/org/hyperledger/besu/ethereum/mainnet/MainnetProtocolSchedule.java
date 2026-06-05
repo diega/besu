@@ -104,7 +104,8 @@ public class MainnetProtocolSchedule {
           badBlockManager,
           isParallelTxProcessingEnabled,
           balConfiguration,
-          metricsSystem);
+          metricsSystem,
+          pluginSpecAdapters);
     }
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> modifiers = new HashMap<>();
     modifiers.put(0L, Function.identity());

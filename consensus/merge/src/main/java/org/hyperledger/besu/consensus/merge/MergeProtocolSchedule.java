@@ -68,6 +68,43 @@ public class MergeProtocolSchedule {
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem,
       final EvmConfiguration evmConfiguration) {
+    return create(
+        config,
+        isRevertReasonEnabled,
+        miningConfiguration,
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        balConfiguration,
+        metricsSystem,
+        evmConfiguration,
+        new ProtocolSpecAdapters(new HashMap<>()));
+  }
+
+  /**
+   * Create protocol schedule, folding in plugin-contributed spec adapters. A plugin adapter at a
+   * milestone is composed over the post-merge modifier rather than replacing it.
+   *
+   * @param config the config
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param miningConfiguration the mining parameters
+   * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
+   * @param balConfiguration configuration related to block access lists
+   * @param metricsSystem the metrics system
+   * @param evmConfiguration the evm configuration
+   * @param pluginSpecAdapters plugin-contributed spec adapters to fold into the schedule
+   * @return the protocol schedule
+   */
+  public static ProtocolSchedule create(
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final MiningConfiguration miningConfiguration,
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem,
+      final EvmConfiguration evmConfiguration,
+      final ProtocolSpecAdapters pluginSpecAdapters) {
 
     Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
         new HashMap<>();
@@ -77,6 +114,11 @@ public class MergeProtocolSchedule {
             MergeProtocolSchedule.applyParisSpecificModifications(
                 specBuilder, config.getChainId(), miningConfiguration, evmConfiguration));
     unapplyModificationsFromShanghaiOnwards(config, postMergeModifications);
+    pluginSpecAdapters.stream()
+        .forEach(
+            entry ->
+                postMergeModifications.merge(
+                    entry.getKey(), entry.getValue(), (base, next) -> base.andThen(next)));
 
     return new ProtocolScheduleBuilder(
             config,
