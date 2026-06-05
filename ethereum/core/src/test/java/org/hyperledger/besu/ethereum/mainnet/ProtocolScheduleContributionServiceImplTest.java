@@ -88,4 +88,31 @@ class ProtocolScheduleContributionServiceImplTest {
     assertThatThrownBy(() -> service.registerContributor(config -> List.of()))
         .isInstanceOf(IllegalStateException.class);
   }
+
+  @Test
+  void differentContributorsModifyingTheSameActivationFailFast() {
+    final ProtocolScheduleContributionServiceImpl service =
+        new ProtocolScheduleContributionServiceImpl();
+    service.registerContributor(
+        config -> List.of(entry("a", new Activation.BlockNumber(100L), ForkIdBoundary.INCLUDED)));
+    service.registerContributor(
+        config -> List.of(entry("b", new Activation.BlockNumber(100L), ForkIdBoundary.INCLUDED)));
+
+    assertThatThrownBy(() -> service.freeze(CONFIG)).isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  void sameContributorMayModifyOneActivationMoreThanOnce() {
+    final ProtocolScheduleContributionServiceImpl service =
+        new ProtocolScheduleContributionServiceImpl();
+    service.registerContributor(
+        config ->
+            List.of(
+                entry("a", new Activation.BlockNumber(100L), ForkIdBoundary.INCLUDED),
+                entry("b", new Activation.BlockNumber(100L), ForkIdBoundary.INCLUDED)));
+
+    final ProtocolSchedulePlan plan = service.freeze(CONFIG);
+
+    assertThat(plan.contributedEntries()).hasSize(2);
+  }
 }

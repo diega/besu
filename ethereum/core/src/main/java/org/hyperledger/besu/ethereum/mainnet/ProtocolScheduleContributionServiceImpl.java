@@ -18,7 +18,9 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.plugin.ServiceManager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -55,8 +57,24 @@ public class ProtocolScheduleContributionServiceImpl
   public synchronized ProtocolSchedulePlan freeze(final GenesisConfigOptions config) {
     if (frozenPlan == null) {
       final List<ForkEntry> entries = new ArrayList<>();
-      for (final ProtocolScheduleContributor contributor : contributors) {
-        entries.addAll(contributor.contribute(config));
+      // Activation -> index of the contributor that owns a schedule modifier there. Two different
+      // contributors modifying the same activation is rejected (no implicit cross-plugin
+      // precedence); a single contributor may compose several modifiers at one activation.
+      final Map<Long, Integer> modifierOwner = new HashMap<>();
+      for (int i = 0; i < contributors.size(); i++) {
+        final List<ForkEntry> contributed = contributors.get(i).contribute(config);
+        for (final ForkEntry entry : contributed) {
+          if (entry.effect() instanceof ScheduleEffect.Modifier) {
+            final Integer owner = modifierOwner.putIfAbsent(entry.activation().value(), i);
+            if (owner != null && owner != i) {
+              throw new IllegalStateException(
+                  "Multiple plugins contributed a schedule modifier at activation "
+                      + entry.activation().value()
+                      + "; cross-plugin composition at the same activation is not supported");
+            }
+          }
+        }
+        entries.addAll(contributed);
       }
       frozenPlan = ProtocolSchedulePlan.create(config, entries);
     }
