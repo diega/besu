@@ -17,7 +17,10 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * The single source of truth for a chain's fork activations, read by every EIP-2124 fork-ID
@@ -58,6 +61,16 @@ public class ProtocolSchedulePlan {
    */
   public static ProtocolSchedulePlan fromConfig(final GenesisConfigOptions config) {
     return create(config, List.of());
+  }
+
+  /**
+   * An empty plan (no fork-ID activations, no schedule effects), used as a non-null default before
+   * the real plan is frozen.
+   *
+   * @return an empty protocol schedule plan
+   */
+  public static ProtocolSchedulePlan empty() {
+    return new ProtocolSchedulePlan(List.of(), List.of(), List.of());
   }
 
   /**
@@ -114,5 +127,23 @@ public class ProtocolSchedulePlan {
    */
   public List<ForkEntry> contributedEntries() {
     return contributedEntries;
+  }
+
+  /**
+   * Projects the contributed {@link ScheduleEffect.Modifier} entries into a {@link
+   * ProtocolSpecAdapters} for the protocol-schedule builder. Modifiers sharing an activation are
+   * composed in contribution order rather than one replacing the other, so nothing is dropped.
+   *
+   * @return the plugin-contributed spec adapters
+   */
+  public ProtocolSpecAdapters scheduleSpecAdapters() {
+    final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> modifiers = new HashMap<>();
+    for (final ForkEntry entry : contributedEntries) {
+      if (entry.effect() instanceof ScheduleEffect.Modifier modifier) {
+        modifiers.merge(
+            entry.activation().value(), modifier.modifier(), (base, next) -> base.andThen(next));
+      }
+    }
+    return new ProtocolSpecAdapters(modifiers);
   }
 }

@@ -141,6 +141,11 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
   /** The genesis config options; */
   protected GenesisConfigOptions genesisConfigOptions;
 
+  /**
+   * The frozen protocol schedule plan, set during {@link #build()} before the schedule is built.
+   */
+  protected ProtocolSchedulePlan protocolSchedulePlan = ProtocolSchedulePlan.empty();
+
   /** The is genesis state hash from data. */
   protected boolean genesisStateHashCacheEnabled;
 
@@ -638,6 +643,13 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
 
     prepForBuild();
 
+    // Freeze the plan (genesis forks + plugin contributions) once, before the schedule and the
+    // fork ID are built, so both derive from the same source.
+    this.protocolSchedulePlan =
+        ProtocolScheduleContributionServiceImpl.resolvePlan(
+            besuComponent.<ServiceManager>map(BesuComponent::getBesuPluginContext),
+            genesisConfigOptions);
+
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
@@ -723,10 +735,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
     final Supplier<ProtocolSpec> currentProtocolSpecSupplier =
         () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
-    final ProtocolSchedulePlan protocolSchedulePlan =
-        ProtocolScheduleContributionServiceImpl.resolvePlan(
-            besuComponent.<ServiceManager>map(BesuComponent::getBesuPluginContext),
-            genesisConfigOptions);
     final ForkIdManager forkIdManager =
         new ForkIdManager(
             blockchain,
