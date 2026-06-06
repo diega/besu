@@ -78,6 +78,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleContributionServiceImpl;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
@@ -721,11 +723,15 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
     final Supplier<ProtocolSpec> currentProtocolSpecSupplier =
         () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
+    final ProtocolSchedulePlan protocolSchedulePlan =
+        ProtocolScheduleContributionServiceImpl.resolvePlan(
+            besuComponent.<ServiceManager>map(BesuComponent::getBesuPluginContext),
+            genesisConfigOptions);
     final ForkIdManager forkIdManager =
         new ForkIdManager(
             blockchain,
-            genesisConfigOptions.getForkBlockNumbers(),
-            genesisConfigOptions.getForkBlockTimestamps());
+            protocolSchedulePlan.forkIdBlockNumbers(),
+            protocolSchedulePlan.forkIdTimestamps());
     final EthPeers ethPeers =
         new EthPeers(
             currentProtocolSpecSupplier,

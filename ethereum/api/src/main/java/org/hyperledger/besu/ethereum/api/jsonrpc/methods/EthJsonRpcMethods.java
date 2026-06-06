@@ -73,12 +73,14 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleContributionServiceImpl;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
@@ -177,7 +179,11 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new EthCreateAccessList(blockchainQueries, transactionSimulator),
             new EthMining(miningCoordinator),
             new EthCapabilities(blockchainQueries),
-            new EthConfig(blockchainQueries, protocolSchedule, genesisConfigOptions),
+            new EthConfig(
+                blockchainQueries,
+                protocolSchedule,
+                ProtocolScheduleContributionServiceImpl.resolvePlan(
+                    Optional.ofNullable(serviceManager), genesisConfigOptions)),
             new EthProtocolVersion(supportedCapabilities),
             new EthGasPrice(blockchainQueries, apiConfiguration),
             new EthChainId(protocolSchedule.getChainId()),
