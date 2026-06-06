@@ -126,6 +126,8 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleContributionService;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleContributionServiceImpl;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeIdentifier;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
@@ -864,6 +866,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         suppressInfoLog();
       }
       besuPluginContext.initialize(PluginsConfigurationOptions.fromCommandLine(commandLine));
+      besuPluginContext.addService(
+          ProtocolScheduleContributionService.class, new ProtocolScheduleContributionServiceImpl());
       besuPluginContext.registerPlugins();
       commandLine.setExecutionStrategy(nextStep);
       return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
