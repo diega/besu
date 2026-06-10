@@ -293,6 +293,18 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
   }
 
   /**
+   * The protocol schedule plan, derived from the genesis config on first use when not supplied.
+   *
+   * @return the protocol schedule plan
+   */
+  protected ProtocolSchedulePlan protocolSchedulePlan() {
+    if (protocolSchedulePlan == null) {
+      protocolSchedulePlan = ProtocolSchedulePlan.fromConfig(genesisConfigOptions);
+    }
+    return protocolSchedulePlan;
+  }
+
+  /**
    * Genesis state hash from data besu controller builder.
    *
    * @param genesisStateHashCacheEnabled the is genesis state hash from data
@@ -655,10 +667,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
 
     prepForBuild();
 
-    if (protocolSchedulePlan == null) {
-      protocolSchedulePlan = ProtocolSchedulePlan.fromConfig(genesisConfigOptions);
-    }
-
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
@@ -747,8 +755,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final ForkIdManager forkIdManager =
         new ForkIdManager(
             blockchain,
-            protocolSchedulePlan.forkIdBlockNumbers(),
-            protocolSchedulePlan.forkIdTimestamps());
+            protocolSchedulePlan().forkIdBlockNumbers(),
+            protocolSchedulePlan().forkIdTimestamps());
     final EthPeers ethPeers =
         new EthPeers(
             currentProtocolSpecSupplier,
@@ -982,7 +990,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         protocolContext,
         ethProtocolManager,
         genesisConfigOptions,
-        protocolSchedulePlan,
+        protocolSchedulePlan(),
         subProtocolConfiguration,
         synchronizer,
         syncState,

@@ -97,7 +97,8 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         badBlockManager,
         isParallelTxProcessingEnabled,
         balConfiguration,
-        metricsSystem);
+        metricsSystem,
+        protocolSchedulePlan().scheduleSpecAdapters());
   }
 
   @Override

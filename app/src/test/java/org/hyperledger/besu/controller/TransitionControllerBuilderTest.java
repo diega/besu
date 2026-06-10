@@ -49,10 +49,17 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.plan.Activation;
+import org.hyperledger.besu.ethereum.mainnet.plan.ForkEntry;
+import org.hyperledger.besu.ethereum.mainnet.plan.ForkIdBoundary;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
+import org.hyperledger.besu.ethereum.mainnet.plan.ScheduleEffect;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -255,6 +262,36 @@ public class TransitionControllerBuilderTest {
             .validateHeader(
                 mockBlock, mockParentBlock, protocolContext, HeaderValidationMode.DETACHED_ONLY);
     assertThat(mergeFriendlyValidation).isTrue();
+  }
+
+  @Test
+  public void contributedScheduleEffectsReachBothSidesOfTheTransition() {
+    // If the transition builder stopped sharing its plan with the sub-builders (whose own build()
+    // never runs), a contribution would silently vanish from the schedules while the fork ID
+    // keeps advertising it -- exactly the drift the plan exists to prevent.
+    final var builder = new TransitionBesuControllerBuilder(powBuilder, postMergeBuilder);
+    builder.genesisConfig(GenesisConfig.mainnet());
+    builder.evmConfiguration(EvmConfiguration.DEFAULT);
+    builder.miningParameters(MiningConfiguration.newDefault());
+    powBuilder.metricsSystem(new NoOpMetricsSystem());
+    postMergeBuilder.metricsSystem(new NoOpMetricsSystem());
+    builder.protocolSchedulePlan(
+        ProtocolSchedulePlan.create(
+            GenesisConfig.mainnet().getConfigOptions(),
+            List.of(
+                new ForkEntry(
+                    "contributed-fork",
+                    new Activation.BlockNumber(1_000_000),
+                    new ScheduleEffect.Modifier(b -> b.blockReward(Wei.of(42))),
+                    ForkIdBoundary.INCLUDED))));
+
+    final var schedule = (TransitionProtocolSchedule) builder.createProtocolSchedule();
+
+    final var contributedHeader = new BlockHeaderTestFixture().number(1_000_000).buildHeader();
+    assertThat(schedule.getPreMergeSchedule().getByBlockHeader(contributedHeader).getBlockReward())
+        .isEqualTo(Wei.of(42));
+    assertThat(schedule.getPostMergeSchedule().getByBlockHeader(contributedHeader).getBlockReward())
+        .isEqualTo(Wei.of(42));
   }
 
   TransitionCoordinator buildTransitionCoordinator(

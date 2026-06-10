@@ -126,6 +126,8 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolScheduleContributionService;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolScheduleContributionServiceImpl;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeIdentifier;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
@@ -325,6 +327,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Map<String, String> environment;
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
+  private final ProtocolScheduleContributionServiceImpl protocolScheduleContributionService =
+      new ProtocolScheduleContributionServiceImpl();
 
   private final PreSynchronizationTaskRunner preSynchronizationTaskRunner =
       new PreSynchronizationTaskRunner();
@@ -864,6 +868,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         suppressInfoLog();
       }
       besuPluginContext.initialize(PluginsConfigurationOptions.fromCommandLine(commandLine));
+      besuPluginContext.addService(
+          ProtocolScheduleContributionService.class, protocolScheduleContributionService);
       besuPluginContext.registerPlugins();
       commandLine.setExecutionStrategy(nextStep);
       return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
@@ -2079,6 +2085,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
             .apiConfiguration(apiConfiguration)
             .balConfiguration(balConfiguration)
+            // Freeze the plan once -- plugins registered, genesis parsed, controller not yet
+            // built -- so the fork ID and the schedule both derive from the same contributions.
+            .protocolSchedulePlan(
+                protocolScheduleContributionService.freeze(genesisConfigOptionsSupplier.get()))
             .besuComponent(besuComponent);
     if (getDataStorageConfiguration().getDataStorageFormat().isBonsaiFormat()) {
       final PathBasedExtraStorageConfiguration subStorageConfiguration =

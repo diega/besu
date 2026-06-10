@@ -45,6 +45,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -68,6 +69,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.plan.Activation;
+import org.hyperledger.besu.ethereum.mainnet.plan.ForkEntry;
+import org.hyperledger.besu.ethereum.mainnet.plan.ForkIdBoundary;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolScheduleContributionService;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
+import org.hyperledger.besu.ethereum.mainnet.plan.ScheduleEffect;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
@@ -99,6 +106,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -265,6 +273,38 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void protocolSchedulePlanIsFrozenFromTheContributionServiceContributions() {
+    // Simulate a plugin: register a contributor at the moment the contribution service is
+    // published to the plugin context, exactly as BesuPlugin#register would.
+    doAnswer(
+            invocation -> {
+              if (ProtocolScheduleContributionService.class.equals(invocation.getArgument(0))) {
+                final ProtocolScheduleContributionService service = invocation.getArgument(1);
+                service.registerContributor(
+                    config ->
+                        List.of(
+                            new ForkEntry(
+                                "plugin-fork",
+                                new Activation.BlockNumber(21_000_000L),
+                                new ScheduleEffect.Modifier(Function.identity()),
+                                ForkIdBoundary.INCLUDED)));
+              }
+              return null;
+            })
+        .when(getBesuPluginContext())
+        .addService(any(), any());
+
+    parseCommand();
+
+    // The controller builder receives the plan frozen from the service: mainnet's own forks and
+    // the plugin's contribution alike, from one freeze.
+    final ArgumentCaptor<ProtocolSchedulePlan> planCaptor =
+        ArgumentCaptor.forClass(ProtocolSchedulePlan.class);
+    verify(mockControllerBuilder).protocolSchedulePlan(planCaptor.capture());
+    assertThat(planCaptor.getValue().forkIdBlockNumbers()).contains(1_150_000L, 21_000_000L);
   }
 
   @Test
