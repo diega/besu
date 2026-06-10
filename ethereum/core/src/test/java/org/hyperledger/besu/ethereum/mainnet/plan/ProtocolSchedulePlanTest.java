@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.plan;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -66,6 +67,50 @@ public class ProtocolSchedulePlanTest {
                     + " \"mergeNetSplitBlock\": 20, \"shanghaiTime\": 1000,"
                     + " \"terminalTotalDifficulty\": 100, \"chainId\": 1234}}")
             .getConfigOptions());
+  }
+
+  @Test
+  public void outOfOrderBlockForksFailAtPlanConstruction() {
+    // Mirrors ProtocolScheduleBuilderTest.createProtocolScheduleOutOfOrderThrows: the same
+    // validation, with the same message, now fires when the plan is built -- before any schedule.
+    assertThatThrownBy(
+            () ->
+                ProtocolSchedulePlan.fromConfig(
+                    GenesisConfig.fromConfig(
+                            "{\"config\": {\"arrowGlacierBlock\": 12, \"grayGlacierBlock\": 11,"
+                                + " \"chainId\": 1234}}")
+                        .getConfigOptions()))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage(
+            "Genesis Config Error: 'GRAY_GLACIER' is scheduled for milestone 11 but it must be on or after milestone 12.");
+  }
+
+  @Test
+  public void outOfOrderTimestampForksFailAtPlanConstruction() {
+    assertThatThrownBy(
+            () ->
+                ProtocolSchedulePlan.fromConfig(
+                    GenesisConfig.fromConfig(
+                            "{\"config\": {\"shanghaiTime\": 3, \"cancunTime\": 2,"
+                                + " \"chainId\": 1234}}")
+                        .getConfigOptions()))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage(
+            "Genesis Config Error: 'CANCUN' is scheduled for milestone 2 but it must be on or after milestone 3.");
+  }
+
+  @Test
+  public void daoForkBlockIsExemptFromOrderValidation() {
+    // The DAO fork was never part of the ordered fork sequence: a daoForkBlock below an already
+    // scheduled fork must not start to fail.
+    final ProtocolSchedulePlan plan =
+        ProtocolSchedulePlan.fromConfig(
+            GenesisConfig.fromConfig(
+                    "{\"config\": {\"homesteadBlock\": 10, \"daoForkBlock\": 5,"
+                        + " \"chainId\": 1234}}")
+                .getConfigOptions());
+
+    assertThat(plan.forkIdBlockNumbers()).containsExactly(5L, 10L);
   }
 
   @Test

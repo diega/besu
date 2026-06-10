@@ -225,7 +225,9 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void testGenesisOverrideOptions() throws Exception {
-    parseCommand("--override-genesis-config", "shanghaiTime=123");
+    // The override must keep mainnet's fork ordering valid: the fork plan is frozen (and
+    // order-validated) at startup, before the controller is built.
+    parseCommand("--override-genesis-config", "shanghaiTime=1681338500");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
@@ -241,10 +243,23 @@ public class BesuCommandTest extends CommandTestAbstract {
     final GenesisConfig actualGenesisConfig = (config.genesisConfig());
     assertThat(actualGenesisConfig).isNotNull();
     assertThat(actualGenesisConfig.getConfigOptions().getShanghaiTime()).isNotEmpty();
-    assertThat(actualGenesisConfig.getConfigOptions().getShanghaiTime().getAsLong()).isEqualTo(123);
+    assertThat(actualGenesisConfig.getConfigOptions().getShanghaiTime().getAsLong())
+        .isEqualTo(1681338500);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void testGenesisOverrideBreakingForkOrderFailsBeforeBuildingTheController() {
+    // The fork plan is frozen (and order-validated) at startup: an override that schedules a fork
+    // out of order fails before the controller is built, with the schedule's historical message.
+    parseCommand("--override-genesis-config", "shanghaiTime=123");
+
+    verify(mockControllerBuilder, never()).build();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Genesis Config Error: 'SHANGHAI' is scheduled for milestone 123 but it must be on or after milestone 15050000.");
   }
 
   @Test

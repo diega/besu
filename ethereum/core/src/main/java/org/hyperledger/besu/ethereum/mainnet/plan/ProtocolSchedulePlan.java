@@ -76,7 +76,9 @@ public final class ProtocolSchedulePlan {
    */
   public static ProtocolSchedulePlan create(
       final GenesisConfigOptions config, final List<ForkEntry> contributedEntries) {
-    final List<ForkEntry> entries = new ArrayList<>(coreForkEntries(config));
+    final List<ForkEntry> coreEntries = coreForkEntries(config);
+    validateForkOrder(coreEntries);
+    final List<ForkEntry> entries = new ArrayList<>(coreEntries);
     config.getDaoForkBlock().ifPresent(daoForkBlock -> entries.add(daoForkEntry(daoForkBlock)));
     entries.addAll(contributedEntries);
 
@@ -133,6 +135,26 @@ public final class ProtocolSchedulePlan {
     timestampEntry(entries, MainnetHardforkId.FUTURE_EIPS, config.getFutureEipsTime());
     timestampEntry(entries, MainnetHardforkId.EXPERIMENTAL_EIPS, config.getExperimentalEipsTime());
     return entries;
+  }
+
+  /**
+   * Validates that the core fork activations do not regress along the canonical enumeration — the
+   * same single running watermark the legacy schedule construction applies, carried from the block
+   * forks into the timestamp forks. The DAO fork and contributed entries are not part of the
+   * ordered sequence and are not validated, matching the legacy behaviour.
+   */
+  private static void validateForkOrder(final List<ForkEntry> coreEntries) {
+    long lastForkBlock = 0;
+    for (final ForkEntry entry : coreEntries) {
+      final long activation = entry.activation().value();
+      if (lastForkBlock > activation) {
+        throw new RuntimeException(
+            String.format(
+                "Genesis Config Error: '%s' is scheduled for milestone %d but it must be on or after milestone %d.",
+                entry.id(), activation, lastForkBlock));
+      }
+      lastForkBlock = activation;
+    }
   }
 
   /**
