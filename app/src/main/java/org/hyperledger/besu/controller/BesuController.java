@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -63,6 +64,7 @@ public class BesuController implements java.io.Closeable {
   private final ProtocolContext protocolContext;
   private final EthProtocolManager ethProtocolManager;
   private final GenesisConfigOptions genesisConfigOptions;
+  private final ProtocolSchedulePlan protocolSchedulePlan;
   private final SubProtocolConfiguration subProtocolConfiguration;
   private final NodeKey nodeKey;
   private final Synchronizer synchronizer;
@@ -85,6 +87,7 @@ public class BesuController implements java.io.Closeable {
    * @param protocolContext the protocol context
    * @param ethProtocolManager the eth protocol manager
    * @param genesisConfigOptions the genesis config options
+   * @param protocolSchedulePlan the protocol schedule plan
    * @param subProtocolConfiguration the sub protocol configuration
    * @param synchronizer the synchronizer
    * @param syncState the sync state
@@ -105,6 +108,7 @@ public class BesuController implements java.io.Closeable {
       final ProtocolContext protocolContext,
       final EthProtocolManager ethProtocolManager,
       final GenesisConfigOptions genesisConfigOptions,
+      final ProtocolSchedulePlan protocolSchedulePlan,
       final SubProtocolConfiguration subProtocolConfiguration,
       final Synchronizer synchronizer,
       final SyncState syncState,
@@ -123,6 +127,7 @@ public class BesuController implements java.io.Closeable {
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
     this.genesisConfigOptions = genesisConfigOptions;
+    this.protocolSchedulePlan = protocolSchedulePlan;
     this.subProtocolConfiguration = subProtocolConfiguration;
     this.synchronizer = synchronizer;
     this.syncState = syncState;
@@ -173,6 +178,15 @@ public class BesuController implements java.io.Closeable {
    */
   public GenesisConfigOptions getGenesisConfigOptions() {
     return genesisConfigOptions;
+  }
+
+  /**
+   * Gets the protocol schedule plan.
+   *
+   * @return the protocol schedule plan
+   */
+  public ProtocolSchedulePlan getProtocolSchedulePlan() {
+    return protocolSchedulePlan;
   }
 
   /**

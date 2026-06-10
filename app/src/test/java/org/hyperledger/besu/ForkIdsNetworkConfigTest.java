@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -126,9 +127,15 @@ public class ForkIdsNetworkConfigTest {
     lenient().when(mockBlockHeader.getNumber()).thenAnswer(o -> blockNumber.get());
     lenient().when(mockBlockHeader.getTimestamp()).thenAnswer(o -> blockNumber.get());
 
+    // Source the fork-ID activations from the ProtocolSchedulePlan — the same path production
+    // uses — so this byte-for-byte oracle exercises the plan, not the genesis getters directly.
+    final ProtocolSchedulePlan protocolSchedulePlan =
+        ProtocolSchedulePlan.fromConfig(genesisConfig.getConfigOptions());
     final ForkIdManager forkIdManager =
         new ForkIdManager(
-            mockBlockchain, genesisConfig.getForkBlockNumbers(), genesisConfig.getForkTimestamps());
+            mockBlockchain,
+            protocolSchedulePlan.forkIdBlockNumbers(),
+            protocolSchedulePlan.forkIdTimestamps());
 
     final List<ForkId> actualForkIds =
         Streams.concat(schedule.streamMilestoneBlocks(), Stream.of(Long.MAX_VALUE))

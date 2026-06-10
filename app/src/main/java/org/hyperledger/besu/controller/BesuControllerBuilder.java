@@ -79,6 +79,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -138,6 +139,12 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
 
   /** The genesis config options; */
   protected GenesisConfigOptions genesisConfigOptions;
+
+  /**
+   * The protocol schedule plan; derived from the genesis config in {@link #build()} when not
+   * supplied.
+   */
+  protected ProtocolSchedulePlan protocolSchedulePlan;
 
   /** The is genesis state hash from data. */
   protected boolean genesisStateHashCacheEnabled;
@@ -270,6 +277,18 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
   public BesuControllerBuilder genesisConfig(final GenesisConfig genesisConfig) {
     this.genesisConfig = genesisConfig;
     this.genesisConfigOptions = genesisConfig.getConfigOptions();
+    return this;
+  }
+
+  /**
+   * Protocol schedule plan besu controller builder.
+   *
+   * @param protocolSchedulePlan the protocol schedule plan
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder protocolSchedulePlan(
+      final ProtocolSchedulePlan protocolSchedulePlan) {
+    this.protocolSchedulePlan = protocolSchedulePlan;
     return this;
   }
 
@@ -636,6 +655,10 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
 
     prepForBuild();
 
+    if (protocolSchedulePlan == null) {
+      protocolSchedulePlan = ProtocolSchedulePlan.fromConfig(genesisConfigOptions);
+    }
+
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
@@ -724,8 +747,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final ForkIdManager forkIdManager =
         new ForkIdManager(
             blockchain,
-            genesisConfigOptions.getForkBlockNumbers(),
-            genesisConfigOptions.getForkBlockTimestamps());
+            protocolSchedulePlan.forkIdBlockNumbers(),
+            protocolSchedulePlan.forkIdTimestamps());
     final EthPeers ethPeers =
         new EthPeers(
             currentProtocolSpecSupplier,
@@ -959,6 +982,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         protocolContext,
         ethProtocolManager,
         genesisConfigOptions,
+        protocolSchedulePlan,
         subProtocolConfiguration,
         synchronizer,
         syncState,
