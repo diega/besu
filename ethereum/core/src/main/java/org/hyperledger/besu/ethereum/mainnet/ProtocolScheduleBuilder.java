@@ -26,13 +26,11 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.OptionalLong;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -160,18 +158,6 @@ public class ProtocolScheduleBuilder {
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
   }
 
-  private long validateForkOrder(
-      final String forkName, final OptionalLong thisForkBlock, final long lastForkBlock) {
-    final long referenceForkBlock = thisForkBlock.orElse(lastForkBlock);
-    if (lastForkBlock > referenceForkBlock) {
-      throw new RuntimeException(
-          String.format(
-              "Genesis Config Error: '%s' is scheduled for milestone %d but it must be on or after milestone %d.",
-              forkName, thisForkBlock.getAsLong(), lastForkBlock));
-    }
-    return referenceForkBlock;
-  }
-
   private NavigableMap<Long, BuilderMapEntry> buildFlattenedMilestoneMap(
       final List<BuilderMapEntry> mileStones) {
     return mileStones.stream()
@@ -194,33 +180,20 @@ public class ProtocolScheduleBuilder {
 
   private List<BuilderMapEntry> createMilestones(
       final MainnetProtocolSpecFactory specFactory, final ProtocolSchedulePlan plan) {
-
-    long lastForkBlock = 0;
-    List<Optional<BuilderMapEntry>> milestones = new ArrayList<>();
-    for (MilestoneDefinition milestone : MilestoneDefinitions.fromPlan(specFactory, plan)) {
-      if (milestone.blockNumberOrTimestamp().isPresent()) {
-        long thisForkBlock = milestone.blockNumberOrTimestamp().getAsLong();
-        validateForkOrder(
-            milestone.hardforkId().name(), milestone.blockNumberOrTimestamp(), lastForkBlock);
-        milestones.add(createMilestone(milestone));
-        lastForkBlock = thisForkBlock;
-      }
-    }
-    return milestones.stream().flatMap(Optional::stream).toList();
+    // The plan's entries carry only present activations and are order-validated at plan creation.
+    return MilestoneDefinitions.fromPlan(specFactory, plan).stream()
+        .map(this::createMilestone)
+        .toList();
   }
 
-  private Optional<BuilderMapEntry> createMilestone(final MilestoneDefinition milestoneDefinition) {
-    if (milestoneDefinition.blockNumberOrTimestamp().isEmpty()) {
-      return Optional.empty();
-    }
+  private BuilderMapEntry createMilestone(final MilestoneDefinition milestoneDefinition) {
     final long blockVal = milestoneDefinition.blockNumberOrTimestamp().getAsLong();
-    return Optional.of(
-        new BuilderMapEntry(
-            milestoneDefinition.hardforkId(),
-            milestoneDefinition.milestoneType(),
-            blockVal,
-            milestoneDefinition.specBuilder().get(),
-            protocolSpecAdapters.getModifierForBlock(blockVal)));
+    return new BuilderMapEntry(
+        milestoneDefinition.hardforkId(),
+        milestoneDefinition.milestoneType(),
+        blockVal,
+        milestoneDefinition.specBuilder().get(),
+        protocolSpecAdapters.getModifierForBlock(blockVal));
   }
 
   private ProtocolSpec getProtocolSpec(

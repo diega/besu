@@ -135,6 +135,15 @@ public class MergeProtocolSchedule {
    * org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecFactory.parisDefinition} until the
    * shanghaiDefinition is utilised. This is due to the way the Transition works via TTD rather than
    * via a blockNumber so it can't be looked up in the schedule.
+   *
+   * <p>Note for the eventual unification with {@code parisDefinition} (issue #2897): this overlay
+   * is <em>not</em> rule-set-equivalent to it. The overlay's header validator ({@code
+   * MergeValidationRulesetFactory.mergeBlockHeaderValidator}) additionally enforces {@code
+   * TimestampBoundedByFutureParameter} and falls back to a PoW/PGA validator for fee markets
+   * without a base fee, neither of which {@code
+   * MainnetBlockHeaderValidator.mergeBlockHeaderValidator} (used by {@code parisDefinition}) does.
+   * Replacing the overlay with the definition is therefore an observable consensus-validation
+   * change, not a refactor.
    */
   private static ProtocolSpecBuilder applyParisSpecificModifications(
       final ProtocolSpecBuilder specBuilder,

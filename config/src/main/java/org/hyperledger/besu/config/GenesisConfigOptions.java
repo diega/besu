@@ -359,12 +359,22 @@ public interface GenesisConfigOptions {
   /**
    * Gets fork block numbers.
    *
+   * <p>Legacy enumeration of the implemented block forks this config activates. The canonical
+   * fork-ID and schedule derivation lives in {@code
+   * org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan} (which this module cannot
+   * depend on); this getter remains only for tests and for {@code
+   * MergeProtocolSchedule.unapplyModificationsFromShanghaiOnwards} (the Merge/TTD overlay tracked
+   * by issue #2897).
+   *
    * @return the fork block numbers
    */
   List<Long> getForkBlockNumbers();
 
   /**
    * Gets fork block timestamps.
+   *
+   * <p>Legacy enumeration of the implemented timestamp forks this config activates; see {@link
+   * #getForkBlockNumbers()} for its remaining scope.
    *
    * @return the fork block timestamps
    */
