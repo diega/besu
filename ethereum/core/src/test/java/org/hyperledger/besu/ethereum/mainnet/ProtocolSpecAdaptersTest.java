@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -42,5 +44,76 @@ public class ProtocolSpecAdaptersTest {
     assertThat(adapters.getModifierForBlock(5)).isEqualTo(secondModifier);
     assertThat(adapters.getModifierForBlock(6)).isEqualTo(secondModifier);
     assertThat(adapters.getModifierForBlock(0)).isEqualTo(Function.identity());
+  }
+
+  @Test
+  public void composesAContributionOverTheFloorModifierAtANewKey() {
+    final List<String> applied = new ArrayList<>();
+    final ProtocolSpecAdapters composed =
+        new ProtocolSpecAdapters(
+                Map.of(0L, tracing(applied, "base@0"), 10L, tracing(applied, "base@10")))
+            .composedWith(ProtocolSpecAdapters.create(5L, tracing(applied, "contributed@5")));
+
+    applyModifierAt(composed, 5L);
+    assertThat(applied).containsExactly("base@0", "contributed@5");
+
+    applied.clear();
+    applyModifierAt(composed, 10L);
+    assertThat(applied).containsExactly("base@10");
+  }
+
+  @Test
+  public void composesAContributionOverTheModifierAtTheSameKey() {
+    final List<String> applied = new ArrayList<>();
+    final ProtocolSpecAdapters composed =
+        new ProtocolSpecAdapters(Map.of(10L, tracing(applied, "base@10")))
+            .composedWith(ProtocolSpecAdapters.create(10L, tracing(applied, "contributed@10")));
+
+    applyModifierAt(composed, 10L);
+    assertThat(applied).containsExactly("base@10", "contributed@10");
+  }
+
+  @Test
+  public void contributionBelowEveryBaseKeyAppliesAlone() {
+    final List<String> applied = new ArrayList<>();
+    final ProtocolSpecAdapters composed =
+        new ProtocolSpecAdapters(Map.of(10L, tracing(applied, "base@10")))
+            .composedWith(ProtocolSpecAdapters.create(5L, tracing(applied, "contributed@5")));
+
+    applyModifierAt(composed, 5L);
+    assertThat(applied).containsExactly("contributed@5");
+  }
+
+  @Test
+  public void contributionsAccumulateAcrossTheirActivations() {
+    final List<String> applied = new ArrayList<>();
+    final ProtocolSpecAdapters composed =
+        new ProtocolSpecAdapters(Map.of(0L, tracing(applied, "base@0")))
+            .composedWith(
+                new ProtocolSpecAdapters(
+                    Map.of(
+                        5L,
+                        tracing(applied, "contributed@5"),
+                        8L,
+                        tracing(applied, "contributed@8"))));
+
+    applyModifierAt(composed, 8L);
+    assertThat(applied).containsExactly("base@0", "contributed@5", "contributed@8");
+
+    applied.clear();
+    applyModifierAt(composed, 5L);
+    assertThat(applied).containsExactly("base@0", "contributed@5");
+  }
+
+  private void applyModifierAt(final ProtocolSpecAdapters adapters, final long key) {
+    final ProtocolSpecBuilder unused = adapters.getModifierForBlock(key).apply(null);
+  }
+
+  private Function<ProtocolSpecBuilder, ProtocolSpecBuilder> tracing(
+      final List<String> applied, final String name) {
+    return builder -> {
+      applied.add(name);
+      return builder;
+    };
   }
 }

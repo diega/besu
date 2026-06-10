@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PraguePreExecutionProcessor;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
@@ -72,6 +73,37 @@ public class MergeProtocolScheduleTest {
     assertThat(homesteadSpec).isNotEqualTo(londonSpec);
     assertThat(homesteadSpec.getFeeMarket().implementsBaseFee()).isFalse();
     assertThat(londonSpec.getFeeMarket().implementsBaseFee()).isTrue();
+  }
+
+  @Test
+  public void contributedAdaptersComposeOverTheParisOverlay() {
+    final GenesisConfigOptions config = GenesisConfig.mainnet().getConfigOptions();
+    final ProtocolSchedule protocolSchedule =
+        MergeProtocolSchedule.create(
+            config,
+            false,
+            MiningConfiguration.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            BalConfiguration.DEFAULT,
+            new NoOpMetricsSystem(),
+            EvmConfiguration.DEFAULT,
+            ProtocolSpecAdapters.create(1_000_000L, builder -> builder.blockReward(Wei.of(42))));
+
+    // The contribution lands at a key with no base modifier of its own: the Paris overlay (the
+    // floor modifier at key 0) must still apply, with the contribution composed on top of it.
+    final ProtocolSpec contributedSpec = protocolSchedule.getByBlockHeader(blockHeader(1_000_000));
+    assertThat(contributedSpec.getBlockReward()).isEqualTo(Wei.of(42));
+    assertThat(contributedSpec.isPoS()).isTrue();
+    assertThat(contributedSpec.getDifficultyCalculator().nextDifficulty(-1, null))
+        .isEqualTo(BigInteger.ZERO);
+
+    // From Shanghai onwards the overlay is unapplied and the contribution is not in force.
+    final ProtocolSpec shanghaiSpec =
+        protocolSchedule.getByBlockHeader(
+            new BlockHeaderTestFixture().timestamp(1681338455).buildHeader());
+    assertThat(shanghaiSpec.getHardforkId()).isEqualTo(SHANGHAI);
+    assertThat(shanghaiSpec.getBlockReward()).isEqualTo(Wei.ZERO);
   }
 
   @Test

@@ -54,6 +54,45 @@ public class MainnetProtocolSchedule {
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
+    return fromConfig(
+        config,
+        isRevertReasonEnabled,
+        evmConfiguration,
+        miningConfiguration,
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        balConfiguration,
+        metricsSystem,
+        ProtocolSpecAdapters.empty());
+  }
+
+  /**
+   * Create a Mainnet protocol schedule from a config object, folding in externally contributed spec
+   * adapters (for example a plugin's). A contributed adapter is composed over the modifier in force
+   * at its milestone rather than replacing it.
+   *
+   * @param config {@link GenesisConfigOptions} containing the config options for the milestone
+   *     starting points
+   * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
+   * @param evmConfiguration how to configure the EVMs jumpdest cache
+   * @param miningConfiguration the mining parameters
+   * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
+   * @param balConfiguration configuration related to block access lists
+   * @param metricsSystem A metricSystem instance to expose metrics in the underlying calls
+   * @param contributedSpecAdapters externally contributed spec adapters to fold into the schedule
+   * @return A configured mainnet protocol schedule
+   */
+  public static ProtocolSchedule fromConfig(
+      final GenesisConfigOptions config,
+      final Optional<Boolean> isRevertReasonEnabled,
+      final Optional<EvmConfiguration> evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem,
+      final ProtocolSpecAdapters contributedSpecAdapters) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
           config,
@@ -63,12 +102,14 @@ public class MainnetProtocolSchedule {
           badBlockManager,
           isParallelTxProcessingEnabled,
           balConfiguration,
-          metricsSystem);
+          metricsSystem,
+          contributedSpecAdapters);
     }
     return new ProtocolScheduleBuilder(
             config,
             Optional.of(DEFAULT_CHAIN_ID),
-            ProtocolSpecAdapters.create(0, Function.identity()),
+            ProtocolSpecAdapters.create(0, Function.identity())
+                .composedWith(contributedSpecAdapters),
             isRevertReasonEnabled.orElse(false),
             evmConfiguration.orElse(EvmConfiguration.DEFAULT),
             miningConfiguration,

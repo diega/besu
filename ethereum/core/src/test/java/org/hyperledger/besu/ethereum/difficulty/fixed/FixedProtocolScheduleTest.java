@@ -17,12 +17,15 @@ package org.hyperledger.besu.ethereum.difficulty.fixed;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -66,6 +69,30 @@ public class FixedProtocolScheduleTest {
                 .getByBlockHeader(blockHeader(500_000))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader))
+        .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
+  }
+
+  @Test
+  public void contributedAdaptersComposeOverTheFixedDifficultyModifier() {
+    final ProtocolSchedule schedule =
+        FixedDifficultyProtocolSchedule.create(
+            GenesisConfig.fromResource("/dev.json").getConfigOptions(),
+            false,
+            EvmConfiguration.DEFAULT,
+            MiningConfiguration.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            BalConfiguration.DEFAULT,
+            new NoOpMetricsSystem(),
+            ProtocolSpecAdapters.create(500, builder -> builder.blockReward(Wei.of(42))));
+
+    final BlockHeader parentHeader = new BlockHeaderTestFixture().number(1).buildHeader();
+
+    // The contribution lands at a key with no base modifier of its own: the fixed-difficulty
+    // modifier (the floor at key 0) must still apply, with the contribution composed on top.
+    final ProtocolSpec contributedSpec = schedule.getByBlockHeader(blockHeader(500));
+    assertThat(contributedSpec.getBlockReward()).isEqualTo(Wei.of(42));
+    assertThat(contributedSpec.getDifficultyCalculator().nextDifficulty(1, parentHeader))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
   }
 

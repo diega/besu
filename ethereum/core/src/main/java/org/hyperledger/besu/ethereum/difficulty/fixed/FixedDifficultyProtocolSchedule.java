@@ -41,13 +41,51 @@ public class FixedDifficultyProtocolSchedule {
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
+    return create(
+        config,
+        isRevertReasonEnabled,
+        evmConfiguration,
+        miningConfiguration,
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        balConfiguration,
+        metricsSystem,
+        ProtocolSpecAdapters.empty());
+  }
+
+  /**
+   * Create a fixed-difficulty protocol schedule, folding in externally contributed spec adapters
+   * composed over the fixed-difficulty modifier rather than replacing it.
+   *
+   * @param config the genesis config options
+   * @param isRevertReasonEnabled whether to store the revert reason of failed transactions
+   * @param evmConfiguration how to configure the EVMs jumpdest cache
+   * @param miningConfiguration the mining configuration
+   * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled whether parallel transaction processing is enabled
+   * @param balConfiguration configuration related to block access lists
+   * @param metricsSystem a metricsSystem instance to expose metrics in the underlying calls
+   * @param contributedSpecAdapters externally contributed spec adapters to fold into the schedule
+   * @return a configured fixed-difficulty protocol schedule
+   */
+  public static ProtocolSchedule create(
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem,
+      final ProtocolSpecAdapters contributedSpecAdapters) {
     return new ProtocolScheduleBuilder(
             config,
             Optional.empty(),
             ProtocolSpecAdapters.create(
-                0,
-                builder ->
-                    builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config))),
+                    0,
+                    builder ->
+                        builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config)))
+                .composedWith(contributedSpecAdapters),
             isRevertReasonEnabled,
             evmConfiguration,
             miningConfiguration,

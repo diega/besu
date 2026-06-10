@@ -38,6 +38,40 @@ public class ProtocolSpecAdapters {
     return new ProtocolSpecAdapters(entries);
   }
 
+  /**
+   * An empty set of adapters: every milestone keeps its unmodified definition.
+   *
+   * @return an empty set of adapters
+   */
+  public static ProtocolSpecAdapters empty() {
+    return new ProtocolSpecAdapters(new HashMap<>());
+  }
+
+  /**
+   * Returns a new set of adapters with the contributed modifiers composed on top of these. A
+   * contributed modifier applies <em>after</em> the modifier in force at its activation — the floor
+   * modifier — rather than replacing it, which is what a bare map key would do when {@code
+   * ProtocolScheduleBuilder} resolves modifiers per milestone. Contributed activations are folded
+   * in ascending order, so a contribution stays in force from its activation through every later
+   * contributed activation.
+   *
+   * @param contributed the modifiers to compose on top of these adapters
+   * @return a new set of adapters with the contributions composed in
+   */
+  public ProtocolSpecAdapters composedWith(final ProtocolSpecAdapters contributed) {
+    final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> composed =
+        new HashMap<>(modifiers);
+    contributed.stream()
+        .sorted(Map.Entry.comparingByKey())
+        .forEach(
+            entry -> {
+              final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> floorModifier =
+                  new ProtocolSpecAdapters(composed).getModifierForBlock(entry.getKey());
+              composed.put(entry.getKey(), floorModifier.andThen(entry.getValue()));
+            });
+    return new ProtocolSpecAdapters(composed);
+  }
+
   public Function<ProtocolSpecBuilder, ProtocolSpecBuilder> getModifierForBlock(
       final long blockNumberOrTimestamp) {
     final NavigableSet<Long> epochs = new TreeSet<>(modifiers.keySet());

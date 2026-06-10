@@ -68,6 +68,44 @@ public class MergeProtocolSchedule {
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem,
       final EvmConfiguration evmConfiguration) {
+    return create(
+        config,
+        isRevertReasonEnabled,
+        miningConfiguration,
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        balConfiguration,
+        metricsSystem,
+        evmConfiguration,
+        ProtocolSpecAdapters.empty());
+  }
+
+  /**
+   * Create protocol schedule, folding in externally contributed spec adapters. A contributed
+   * adapter is composed over the post-merge modifier in force at its milestone — the Paris overlay
+   * before the first timestamp fork — rather than replacing it.
+   *
+   * @param config the config
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param miningConfiguration the mining parameters
+   * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
+   * @param balConfiguration configuration related to block access lists
+   * @param metricsSystem the metrics system
+   * @param evmConfiguration the evm configuration
+   * @param contributedSpecAdapters externally contributed spec adapters to fold into the schedule
+   * @return the protocol schedule
+   */
+  public static ProtocolSchedule create(
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final MiningConfiguration miningConfiguration,
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem,
+      final EvmConfiguration evmConfiguration,
+      final ProtocolSpecAdapters contributedSpecAdapters) {
 
     Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
         new HashMap<>();
@@ -81,7 +119,7 @@ public class MergeProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             Optional.of(DEFAULT_CHAIN_ID),
-            new ProtocolSpecAdapters(postMergeModifications),
+            new ProtocolSpecAdapters(postMergeModifications).composedWith(contributedSpecAdapters),
             isRevertReasonEnabled,
             evmConfiguration,
             miningConfiguration,
