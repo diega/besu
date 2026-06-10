@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfiguration;
+import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
 import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
@@ -58,6 +59,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -135,10 +137,15 @@ public final class RunnerBuilderTest {
     when(besuController.getMiningCoordinator()).thenReturn(new NoopMiningCoordinator());
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
     when(besuController.getEthPeers()).thenReturn(mock(EthPeers.class));
-    final GenesisConfigOptions genesisConfigOptions = mock(GenesisConfigOptions.class);
-    when(genesisConfigOptions.getForkBlockNumbers()).thenReturn(Collections.emptyList());
-    when(genesisConfigOptions.getForkBlockTimestamps()).thenReturn(Collections.emptyList());
-    when(besuController.getGenesisConfigOptions()).thenReturn(genesisConfigOptions);
+    // The discovery agent reads its fork-ID activations from the plan, on every wiring path.
+    when(besuController.getProtocolSchedulePlan())
+        .thenReturn(ProtocolSchedulePlan.fromConfig(new StubGenesisConfigOptions()));
+  }
+
+  // The genesis config options are only read on wiring paths with discovery enabled, so the tests
+  // that reach them stub this explicitly.
+  private void stubGenesisConfigOptions() {
+    when(besuController.getGenesisConfigOptions()).thenReturn(mock(GenesisConfigOptions.class));
   }
 
   @Test
@@ -186,6 +193,7 @@ public final class RunnerBuilderTest {
 
   @Test
   public void movingAcrossProtocolSpecsUpdatesNodeRecord() {
+    stubGenesisConfigOptions();
     final BlockDataGenerator gen = new BlockDataGenerator();
     final String p2pAdvertisedHost = "172.0.0.1";
     final int p2pListenPort = 30301;
@@ -243,6 +251,7 @@ public final class RunnerBuilderTest {
 
   @Test
   public void whenEngineApiAddedListensOnDefaultPort() {
+    stubGenesisConfigOptions();
     setupBlockchainAndBlock();
 
     final JsonRpcConfiguration jrpc = JsonRpcConfiguration.createDefault();
@@ -288,6 +297,7 @@ public final class RunnerBuilderTest {
 
   @Test
   public void whenEngineApiAddedWebSocketReadyOnSamePort() {
+    stubGenesisConfigOptions();
     setupBlockchainAndBlock();
 
     final WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
@@ -332,6 +342,7 @@ public final class RunnerBuilderTest {
 
   @Test
   public void whenEngineApiAddedEthSubscribeAvailable() {
+    stubGenesisConfigOptions();
     setupBlockchainAndBlock();
 
     final WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
@@ -379,6 +390,7 @@ public final class RunnerBuilderTest {
 
   @Test
   public void noEngineApiNoServiceForMethods() {
+    stubGenesisConfigOptions();
     setupBlockchainAndBlock();
 
     final JsonRpcConfiguration defaultRpcConfig = JsonRpcConfiguration.createDefault();

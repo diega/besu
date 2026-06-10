@@ -781,8 +781,8 @@ public class RunnerBuilder {
             .metricsSystem(metricsSystem)
             .storageProvider(storageProvider)
             .blockchain(context.getBlockchain())
-            .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
-            .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
+            .blockNumberForks(besuController.getProtocolSchedulePlan().forkIdBlockNumbers())
+            .timestampForks(besuController.getProtocolSchedulePlan().forkIdTimestamps())
             .build();
 
     RlpxAgentFactory rlpxAgentFactory =
