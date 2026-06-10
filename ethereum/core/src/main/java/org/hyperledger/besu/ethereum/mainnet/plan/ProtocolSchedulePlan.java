@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Function;
 
@@ -40,14 +41,20 @@ public final class ProtocolSchedulePlan {
 
   private final List<Long> forkIdBlockNumbers;
   private final List<Long> forkIdTimestamps;
+  private final List<ForkEntry> milestoneEntries;
+  private final Optional<ForkEntry> daoForkEntry;
   private final List<ForkEntry> contributedEntries;
 
   private ProtocolSchedulePlan(
       final List<Long> forkIdBlockNumbers,
       final List<Long> forkIdTimestamps,
+      final List<ForkEntry> milestoneEntries,
+      final Optional<ForkEntry> daoForkEntry,
       final List<ForkEntry> contributedEntries) {
     this.forkIdBlockNumbers = List.copyOf(forkIdBlockNumbers);
     this.forkIdTimestamps = List.copyOf(forkIdTimestamps);
+    this.milestoneEntries = List.copyOf(milestoneEntries);
+    this.daoForkEntry = daoForkEntry;
     this.contributedEntries = List.copyOf(contributedEntries);
   }
 
@@ -76,10 +83,24 @@ public final class ProtocolSchedulePlan {
    */
   public static ProtocolSchedulePlan create(
       final GenesisConfigOptions config, final List<ForkEntry> contributedEntries) {
+    contributedEntries.stream()
+        .filter(entry -> entry.effect() instanceof ScheduleEffect.BuiltInHardfork)
+        .findFirst()
+        .ifPresent(
+            entry -> {
+              throw new IllegalArgumentException(
+                  "Contributed fork entry '"
+                      + entry.id()
+                      + "' references a built-in hardfork; contributions must use schedule"
+                      + " modifiers");
+            });
     final List<ForkEntry> coreEntries = coreForkEntries(config);
     validateForkOrder(coreEntries);
+    final Optional<ForkEntry> daoEntry =
+        config.getDaoForkBlock().stream().mapToObj(ProtocolSchedulePlan::daoForkEntry).findFirst();
+
     final List<ForkEntry> entries = new ArrayList<>(coreEntries);
-    config.getDaoForkBlock().ifPresent(daoForkBlock -> entries.add(daoForkEntry(daoForkBlock)));
+    daoEntry.ifPresent(entries::add);
     entries.addAll(contributedEntries);
 
     final List<Long> blockNumbers = new ArrayList<>();
@@ -95,6 +116,8 @@ public final class ProtocolSchedulePlan {
     return new ProtocolSchedulePlan(
         blockNumbers.stream().distinct().sorted().toList(),
         timestamps.stream().distinct().sorted().toList(),
+        coreEntries,
+        daoEntry,
         contributedEntries);
   }
 
@@ -223,6 +246,28 @@ public final class ProtocolSchedulePlan {
    */
   public List<Long> forkIdTimestamps() {
     return forkIdTimestamps;
+  }
+
+  /**
+   * The core fork entries the config activates, in the canonical milestone order (block forks, then
+   * timestamp forks) — the schedule's milestone source. The DAO fork is not part of this ordered
+   * enumeration; see {@link #daoForkEntry()}.
+   *
+   * @return the ordered core fork entries
+   */
+  public List<ForkEntry> milestoneEntries() {
+    return milestoneEntries;
+  }
+
+  /**
+   * The DAO fork entry, when the config activates it. It is a fork-ID boundary and a schedule
+   * milestone, but lives outside the ordered fork sequence and outside the schedule's milestone
+   * map, exactly as before.
+   *
+   * @return the DAO fork entry, if the config activates the DAO fork
+   */
+  public Optional<ForkEntry> daoForkEntry() {
+    return daoForkEntry;
   }
 
   /**

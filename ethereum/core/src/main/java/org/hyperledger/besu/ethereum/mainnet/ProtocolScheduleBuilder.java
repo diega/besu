@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinition;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinitions;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneType;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -97,7 +98,13 @@ public class ProtocolScheduleBuilder {
             balConfiguration,
             metricsSystem);
 
-    final List<BuilderMapEntry> mileStones = createMilestones(specFactory);
+    // The plan is the single enumeration of the config's fork activations. Externally contributed
+    // schedule effects do not travel through it here: they reach this builder already projected
+    // into the spec adapters, so deriving the plan from the config is equivalent to receiving the
+    // frozen instance.
+    final ProtocolSchedulePlan plan = ProtocolSchedulePlan.fromConfig(config);
+
+    final List<BuilderMapEntry> mileStones = createMilestones(specFactory, plan);
     final Map<HardforkId, Long> completeMileStoneList = buildFullMilestoneMap(mileStones);
     protocolSchedule.setMilestones(completeMileStoneList);
 
@@ -140,16 +147,15 @@ public class ProtocolScheduleBuilder {
     // The DAO fork is not an ordered milestone like the others: it is a config-activated overlay
     // on Homestead whose two behaviours (the irregular state change and the extra-data window) are
     // guarded by block number inside the spec itself, so a single milestone suffices.
-    config
-        .getDaoForkBlock()
+    plan.daoForkEntry()
         .ifPresent(
-            daoBlockNumber ->
+            daoForkEntry ->
                 addProtocolSpec(
                     protocolSchedule,
                     MilestoneType.BLOCK_NUMBER,
-                    daoBlockNumber,
+                    daoForkEntry.activation().value(),
                     specFactory.daoForkDefinition(),
-                    protocolSpecAdapters.getModifierForBlock(daoBlockNumber)));
+                    protocolSpecAdapters.getModifierForBlock(daoForkEntry.activation().value())));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
   }
@@ -186,12 +192,12 @@ public class ProtocolScheduleBuilder {
                 (existing, replacement) -> existing));
   }
 
-  private List<BuilderMapEntry> createMilestones(final MainnetProtocolSpecFactory specFactory) {
+  private List<BuilderMapEntry> createMilestones(
+      final MainnetProtocolSpecFactory specFactory, final ProtocolSchedulePlan plan) {
 
     long lastForkBlock = 0;
     List<Optional<BuilderMapEntry>> milestones = new ArrayList<>();
-    for (MilestoneDefinition milestone :
-        MilestoneDefinitions.createMilestoneDefinitions(specFactory, config)) {
+    for (MilestoneDefinition milestone : MilestoneDefinitions.fromPlan(specFactory, plan)) {
       if (milestone.blockNumberOrTimestamp().isPresent()) {
         long thisForkBlock = milestone.blockNumberOrTimestamp().getAsLong();
         validateForkOrder(
