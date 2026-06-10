@@ -23,8 +23,8 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValid
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.BaseFeeMarketBlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.BlobGasValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.CalculatedDifficultyValidationRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantOmmersHashRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.DaoForkExtraDataValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ExtraDataMaxLengthValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
@@ -62,11 +62,8 @@ public final class MainnetBlockHeaderValidator {
     return createPgaFeeMarketValidator(hasher);
   }
 
-  public static BlockHeaderValidator.Builder createDaoValidator() {
-    return createPgaFeeMarketValidator()
-        .addRule(
-            new ConstantFieldValidationRule<>(
-                "extraData", BlockHeader::getExtraData, DAO_EXTRA_DATA));
+  public static BlockHeaderValidator.Builder createDaoValidator(final long daoForkBlock) {
+    return createPgaFeeMarketValidator().addRule(new DaoForkExtraDataValidationRule(daoForkBlock));
   }
 
   static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator() {

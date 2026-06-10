@@ -25,8 +25,6 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO4;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO5;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BYZANTIUM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_INIT;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_TRANSITION;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FRONTIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.HOMESTEAD;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.LONDON;
@@ -122,10 +120,13 @@ class ProtocolScheduleBuilderTest {
         .isEqualTo(FRONTIER);
     assertThat(protocolSchedule.getByBlockHeader(blockHeader(1)).getHardforkId())
         .isEqualTo(HOMESTEAD);
+    // The DAO fork keeps Homestead rules; it adds a single milestone at the fork block whose
+    // DAO-specific behaviours are guarded by block number inside the spec.
     assertThat(protocolSchedule.getByBlockHeader(blockHeader(2)).getHardforkId())
-        .isEqualTo(DAO_RECOVERY_INIT);
-    assertThat(protocolSchedule.getByBlockHeader(blockHeader(3)).getHardforkId())
-        .isEqualTo(DAO_RECOVERY_TRANSITION);
+        .isEqualTo(HOMESTEAD);
+    assertThat(protocolSchedule.anyMatch(s -> s.fork().milestone() == 2L)).isTrue();
+    assertThat(protocolSchedule.anyMatch(s -> s.fork().milestone() == 3L)).isFalse();
+    assertThat(protocolSchedule.anyMatch(s -> s.fork().milestone() == 12L)).isFalse();
     assertThat(protocolSchedule.getByBlockHeader(blockHeader(12)).getHardforkId())
         .isEqualTo(HOMESTEAD);
     assertThat(protocolSchedule.getByBlockHeader(blockHeader(13)).getHardforkId())

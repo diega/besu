@@ -18,8 +18,6 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.ARROW_
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BYZANTIUM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CONSTANTINOPLE;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_INIT;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_TRANSITION;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FRONTIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.GRAY_GLACIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.HOMESTEAD;
@@ -51,10 +49,13 @@ public class MainnetProtocolScheduleTest {
         .isEqualTo(FRONTIER);
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_150_000L)).getHardforkId())
         .isEqualTo(HOMESTEAD);
+    // The DAO fork keeps Homestead rules: a single milestone at 1_920_000 whose DAO-specific
+    // behaviours (irregular state change, extra-data window) are block-number-guarded in the spec.
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_920_000L)).getHardforkId())
-        .isEqualTo(DAO_RECOVERY_INIT);
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_920_001L)).getHardforkId())
-        .isEqualTo(DAO_RECOVERY_TRANSITION);
+        .isEqualTo(HOMESTEAD);
+    Assertions.assertThat(sched.anyMatch(s -> s.fork().milestone() == 1_920_000L)).isTrue();
+    Assertions.assertThat(sched.anyMatch(s -> s.fork().milestone() == 1_920_001L)).isFalse();
+    Assertions.assertThat(sched.anyMatch(s -> s.fork().milestone() == 1_920_010L)).isFalse();
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_920_010L)).getHardforkId())
         .isEqualTo(HOMESTEAD);
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(2_463_000L)).getHardforkId())
@@ -119,9 +120,9 @@ public class MainnetProtocolScheduleTest {
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(2)).getHardforkId())
         .isEqualTo(HOMESTEAD);
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(3)).getHardforkId())
-        .isEqualTo(DAO_RECOVERY_INIT);
+        .isEqualTo(HOMESTEAD);
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(4)).getHardforkId())
-        .isEqualTo(DAO_RECOVERY_TRANSITION);
+        .isEqualTo(HOMESTEAD);
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(13)).getHardforkId())
         .isEqualTo(HOMESTEAD);
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(14)).getHardforkId())

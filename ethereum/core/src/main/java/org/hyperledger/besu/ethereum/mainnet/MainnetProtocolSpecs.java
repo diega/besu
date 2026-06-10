@@ -25,8 +25,6 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO5;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BYZANTIUM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CONSTANTINOPLE;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_INIT;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_TRANSITION;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.EXPERIMENTAL_EIPS;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FRONTIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FUTURE_EIPS;
@@ -277,12 +275,23 @@ public abstract class MainnetProtocolSpecs {
         .hardforkId(HOMESTEAD);
   }
 
-  public static ProtocolSpecBuilder daoRecoveryInitDefinition(
+  /**
+   * The DAO fork: Homestead rules plus the two DAO-specific behaviours, each guarded by block
+   * number exactly as in go-ethereum and Nethermind — the irregular state change applies only at
+   * the fork block ({@link DaoBlockProcessor}), and the "dao-hard-fork" extra-data marker is
+   * required for the ten blocks from the fork block ({@link
+   * org.hyperledger.besu.ethereum.mainnet.headervalidationrules.DaoForkExtraDataValidationRule}).
+   * The spec deliberately keeps {@code HOMESTEAD} as its hardfork id: the DAO fork does not change
+   * the protocol rules, it is an irregular state change plus a transient header check on top of
+   * Homestead.
+   */
+  public static ProtocolSpecBuilder daoForkDefinition(
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
+    final long daoForkBlock = genesisConfigOptions.getDaoForkBlock().orElseThrow();
     return homesteadDefinition(
             genesisConfigOptions,
             evmConfiguration,
@@ -291,7 +300,7 @@ public abstract class MainnetProtocolSpecs {
             metricsSystem)
         .blockHeaderValidatorBuilder(
             (feeMarket, gasCalculator, gasLimitCalculator) ->
-                MainnetBlockHeaderValidator.createDaoValidator())
+                MainnetBlockHeaderValidator.createDaoValidator(daoForkBlock))
         .blockProcessorBuilder(
             (transactionProcessor,
                 transactionReceiptFactory,
@@ -319,27 +328,8 @@ public abstract class MainnetProtocolSpecs {
                             skipZeroBlockRewards,
                             protocolSchedule,
                             balConfig,
-                            metricsSystem)))
-        .hardforkId(DAO_RECOVERY_INIT);
-  }
-
-  public static ProtocolSpecBuilder daoRecoveryTransitionDefinition(
-      final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
-      final MetricsSystem metricsSystem) {
-    return daoRecoveryInitDefinition(
-            genesisConfigOptions,
-            evmConfiguration,
-            isParallelTxProcessingEnabled,
-            balConfiguration,
-            metricsSystem)
-        .blockProcessorBuilder(
-            isParallelTxProcessingEnabled
-                ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
-                : new MainnetBlockProcessor.MainnetBlockProcessorBuilder(metricsSystem))
-        .hardforkId(DAO_RECOVERY_TRANSITION);
+                            metricsSystem),
+                    daoForkBlock));
   }
 
   public static ProtocolSpecBuilder tangerineWhistleDefinition(
@@ -1440,7 +1430,13 @@ public abstract class MainnetProtocolSpecs {
     }
   }
 
-  private record DaoBlockProcessor(BlockProcessor wrapped) implements BlockProcessor {
+  /**
+   * Applies the DAO irregular state change (draining the DAO accounts into the refund contract)
+   * before processing the DAO fork block, and only that block — every other block is processed
+   * unchanged. The block-number guard mirrors go-ethereum's {@code ApplyDAOHardFork} call site and
+   * Nethermind's {@code ApplyDaoTransition}.
+   */
+  record DaoBlockProcessor(BlockProcessor wrapped, long daoForkBlock) implements BlockProcessor {
 
     @Override
     public BlockProcessingResult processBlock(
@@ -1448,7 +1444,7 @@ public abstract class MainnetProtocolSpecs {
         final Blockchain blockchain,
         final MutableWorldState worldState,
         final Block block) {
-      updateWorldStateForDao(worldState);
+      updateWorldStateForDao(worldState, block);
       return wrapped.processBlock(
           protocolContext,
           blockchain,
@@ -1464,7 +1460,7 @@ public abstract class MainnetProtocolSpecs {
         final MutableWorldState worldState,
         final Block block,
         final Optional<BlockAccessList> blockAccessList) {
-      updateWorldStateForDao(worldState);
+      updateWorldStateForDao(worldState, block);
       return wrapped.processBlock(protocolContext, blockchain, worldState, block, blockAccessList);
     }
 
@@ -1492,7 +1488,7 @@ public abstract class MainnetProtocolSpecs {
         final Block block,
         final Optional<BlockAccessList> blockAccessList,
         final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
-      updateWorldStateForDao(worldState);
+      updateWorldStateForDao(worldState, block);
       return wrapped.processBlock(
           protocolContext,
           blockchain,
@@ -1505,7 +1501,10 @@ public abstract class MainnetProtocolSpecs {
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =
         Address.fromHexString("0xbf4ed7b27f1d666546e30d74d50d173d20bca754");
 
-    private void updateWorldStateForDao(final MutableWorldState worldState) {
+    private void updateWorldStateForDao(final MutableWorldState worldState, final Block block) {
+      if (block.getHeader().getNumber() != daoForkBlock) {
+        return;
+      }
       try {
         final JsonArray json =
             new JsonArray(

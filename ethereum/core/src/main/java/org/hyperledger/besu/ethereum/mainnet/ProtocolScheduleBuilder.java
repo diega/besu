@@ -137,34 +137,19 @@ public class ProtocolScheduleBuilder {
                     e.builder(),
                     e.modifier));
 
-    // NOTE: It is assumed that Daofork blocks will not be used for private networks
-    // as too many risks exist around inserting a protocol-spec between daoBlock and daoBlock+10.
+    // The DAO fork is not an ordered milestone like the others: it is a config-activated overlay
+    // on Homestead whose two behaviours (the irregular state change and the extra-data window) are
+    // guarded by block number inside the spec itself, so a single milestone suffices.
     config
         .getDaoForkBlock()
         .ifPresent(
-            daoBlockNumber -> {
-              final BuilderMapEntry previousSpecBuilder =
-                  builders.floorEntry(daoBlockNumber).getValue();
-              final ProtocolSpec originalProtocolSpec =
-                  getProtocolSpec(
-                      protocolSchedule,
-                      previousSpecBuilder.builder(),
-                      previousSpecBuilder.modifier());
-              addProtocolSpec(
-                  protocolSchedule,
-                  MilestoneType.BLOCK_NUMBER,
-                  daoBlockNumber,
-                  specFactory.daoRecoveryInitDefinition(),
-                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber));
-              addProtocolSpec(
-                  protocolSchedule,
-                  MilestoneType.BLOCK_NUMBER,
-                  daoBlockNumber + 1L,
-                  specFactory.daoRecoveryTransitionDefinition(),
-                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber + 1L));
-              // Return to the previous protocol spec after the dao fork has completed.
-              protocolSchedule.putBlockNumberMilestone(daoBlockNumber + 10, originalProtocolSpec);
-            });
+            daoBlockNumber ->
+                addProtocolSpec(
+                    protocolSchedule,
+                    MilestoneType.BLOCK_NUMBER,
+                    daoBlockNumber,
+                    specFactory.daoForkDefinition(),
+                    protocolSpecAdapters.getModifierForBlock(daoBlockNumber)));
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
   }
