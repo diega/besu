@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
@@ -136,6 +137,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
                 CLIENT_COMMIT,
                 CHAIN_ID,
                 new StubGenesisConfigOptions(),
+                ProtocolSchedulePlan.fromConfig(new StubGenesisConfigOptions()),
                 peerDiscoveryMock,
                 blockchainQueries,
                 synchronizer,

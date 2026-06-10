@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
@@ -203,6 +204,7 @@ public class JsonRpcTestMethodsFactory {
             CLIENT_COMMIT,
             getChainId(),
             new StubGenesisConfigOptions(),
+            ProtocolSchedulePlan.fromConfig(new StubGenesisConfigOptions()),
             peerDiscovery,
             blockchainQueries,
             synchronizer,

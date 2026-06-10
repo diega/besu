@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -61,6 +62,7 @@ public class JsonRpcMethodsFactory {
       final String commit,
       final BigInteger networkId,
       final GenesisConfigOptions genesisConfigOptions,
+      final ProtocolSchedulePlan protocolSchedulePlan,
       final P2PNetwork p2pNetwork,
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,
@@ -134,7 +136,7 @@ public class JsonRpcMethodsFactory {
                   miningConfiguration,
                   supportedCapabilities,
                   apiConfiguration,
-                  genesisConfigOptions,
+                  protocolSchedulePlan,
                   transactionSimulator,
                   protocolContext.getPluginServiceManager(),
                   metricsSystem),

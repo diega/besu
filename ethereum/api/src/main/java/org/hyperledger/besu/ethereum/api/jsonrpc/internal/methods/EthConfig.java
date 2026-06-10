@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -26,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.Hardfork;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
@@ -50,15 +50,15 @@ public class EthConfig implements JsonRpcMethod {
   public EthConfig(
       final BlockchainQueries blockchain,
       final ProtocolSchedule protocolSchedule,
-      final GenesisConfigOptions genesisConfigOptions) {
+      final ProtocolSchedulePlan protocolSchedulePlan) {
 
     this.blockchain = blockchain;
     this.protocolSchedule = protocolSchedule;
     forkIdManager =
         new ForkIdManager(
             blockchain.getBlockchain(),
-            genesisConfigOptions.getForkBlockNumbers(),
-            genesisConfigOptions.getForkBlockTimestamps());
+            protocolSchedulePlan.forkIdBlockNumbers(),
+            protocolSchedulePlan.forkIdTimestamps());
   }
 
   @Override

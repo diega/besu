@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -73,6 +72,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.plugin.ServiceManager;
@@ -95,7 +95,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final Set<Capability> supportedCapabilities;
   private final ApiConfiguration apiConfiguration;
-  private final GenesisConfigOptions genesisConfigOptions;
+  private final ProtocolSchedulePlan protocolSchedulePlan;
   private final TransactionSimulator transactionSimulator;
   private final ServiceManager serviceManager;
   private final MetricsSystem metricsSystem;
@@ -110,7 +110,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final MiningConfiguration miningConfiguration,
       final Set<Capability> supportedCapabilities,
       final ApiConfiguration apiConfiguration,
-      final GenesisConfigOptions genesisConfigOptions,
+      final ProtocolSchedulePlan protocolSchedulePlan,
       final TransactionSimulator transactionSimulator,
       final ServiceManager serviceManager,
       final MetricsSystem metricsSystem) {
@@ -123,7 +123,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.miningConfiguration = miningConfiguration;
     this.supportedCapabilities = supportedCapabilities;
     this.apiConfiguration = apiConfiguration;
-    this.genesisConfigOptions = genesisConfigOptions;
+    this.protocolSchedulePlan = protocolSchedulePlan;
     this.transactionSimulator = transactionSimulator;
     this.serviceManager = serviceManager;
     this.metricsSystem = metricsSystem;
@@ -177,7 +177,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new EthCreateAccessList(blockchainQueries, transactionSimulator),
             new EthMining(miningCoordinator),
             new EthCapabilities(blockchainQueries),
-            new EthConfig(blockchainQueries, protocolSchedule, genesisConfigOptions),
+            new EthConfig(blockchainQueries, protocolSchedule, protocolSchedulePlan),
             new EthProtocolVersion(supportedCapabilities),
             new EthGasPrice(blockchainQueries, apiConfiguration),
             new EthChainId(protocolSchedule.getChainId()),

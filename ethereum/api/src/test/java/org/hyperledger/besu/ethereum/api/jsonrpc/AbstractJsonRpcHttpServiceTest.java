@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -213,6 +214,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             CLIENT_COMMIT,
             NETWORK_ID,
             new StubGenesisConfigOptions(),
+            ProtocolSchedulePlan.fromConfig(new StubGenesisConfigOptions()),
             peerDiscoveryMock,
             blockchainQueries,
             synchronizerMock,

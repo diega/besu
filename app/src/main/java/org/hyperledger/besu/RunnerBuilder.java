@@ -1355,6 +1355,7 @@ public class RunnerBuilder {
                 BesuVersionUtils.commit(),
                 ethNetworkConfig.networkId(),
                 besuController.getGenesisConfigOptions(),
+                besuController.getProtocolSchedulePlan(),
                 network,
                 blockchainQueries,
                 synchronizer,

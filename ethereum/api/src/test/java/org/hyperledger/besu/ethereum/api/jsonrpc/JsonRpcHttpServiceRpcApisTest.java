@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -220,6 +221,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                 CLIENT_COMMIT,
                 NETWORK_ID,
                 new StubGenesisConfigOptions(),
+                ProtocolSchedulePlan.fromConfig(new StubGenesisConfigOptions()),
                 mock(P2PNetwork.class),
                 blockchainQueries,
                 mock(Synchronizer.class),
@@ -356,6 +358,7 @@ public class JsonRpcHttpServiceRpcApisTest {
                 CLIENT_COMMIT,
                 NETWORK_ID,
                 new StubGenesisConfigOptions(),
+                ProtocolSchedulePlan.fromConfig(new StubGenesisConfigOptions()),
                 p2pNetwork,
                 blockchainQueries,
                 mock(Synchronizer.class),

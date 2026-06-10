@@ -56,6 +56,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.plan.ProtocolSchedulePlan;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -187,6 +188,7 @@ public class WebSocketServiceLoginTest {
                     CLIENT_COMMIT,
                     CHAIN_ID,
                     genesisConfigOptions,
+                    ProtocolSchedulePlan.fromConfig(genesisConfigOptions),
                     peerDiscoveryMock,
                     blockchainQueries,
                     synchronizer,
