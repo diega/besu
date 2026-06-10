@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.plan;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.function.Function;
 
 /**
@@ -62,10 +64,11 @@ public final class ProtocolSchedulePlan {
   }
 
   /**
-   * Builds the plan from the genesis configuration and contributed fork entries. The {@link
-   * ForkIdBoundary#INCLUDED} entries are folded into the fork-ID activation lists (partitioned by
-   * activation kind, never across kinds, normalised distinct-and-sorted within each kind); all
-   * entries are retained for protocol-schedule construction.
+   * Builds the plan from the genesis configuration and contributed fork entries. The fork-ID
+   * activation lists are derived from the union of the {@link ForkIdBoundary#INCLUDED} entries —
+   * the core forks the config activates, the DAO fork, and the contributions — partitioned by
+   * activation kind, never across kinds, normalised distinct-and-sorted within each kind. All
+   * contributed entries are retained for protocol-schedule construction.
    *
    * @param config the genesis configuration options
    * @param contributedEntries the contributed fork entries, in contribution order
@@ -73,9 +76,13 @@ public final class ProtocolSchedulePlan {
    */
   public static ProtocolSchedulePlan create(
       final GenesisConfigOptions config, final List<ForkEntry> contributedEntries) {
-    final List<Long> blockNumbers = new ArrayList<>(config.getForkBlockNumbers());
-    final List<Long> timestamps = new ArrayList<>(config.getForkBlockTimestamps());
-    for (final ForkEntry entry : contributedEntries) {
+    final List<ForkEntry> entries = new ArrayList<>(coreForkEntries(config));
+    config.getDaoForkBlock().ifPresent(daoForkBlock -> entries.add(daoForkEntry(daoForkBlock)));
+    entries.addAll(contributedEntries);
+
+    final List<Long> blockNumbers = new ArrayList<>();
+    final List<Long> timestamps = new ArrayList<>();
+    for (final ForkEntry entry : entries) {
       if (entry.forkIdBoundary() == ForkIdBoundary.INCLUDED) {
         switch (entry.activation()) {
           case Activation.BlockNumber blockNumber -> blockNumbers.add(blockNumber.value());
@@ -87,6 +94,95 @@ public final class ProtocolSchedulePlan {
         blockNumbers.stream().distinct().sorted().toList(),
         timestamps.stream().distinct().sorted().toList(),
         contributedEntries);
+  }
+
+  /**
+   * The core fork entries the config activates, enumerated in the canonical milestone order (block
+   * numbers first, then timestamps). Frontier at genesis is a schedule milestone but not an
+   * EIP-2124 boundary; every other core fork is. The DAO fork is deliberately not part of this
+   * ordered enumeration — it is config-activated outside the ordered fork sequence (see {@link
+   * #daoForkEntry}).
+   */
+  private static List<ForkEntry> coreForkEntries(final GenesisConfigOptions config) {
+    final List<ForkEntry> entries = new ArrayList<>();
+    blockEntry(entries, MainnetHardforkId.FRONTIER, OptionalLong.of(0), ForkIdBoundary.EXCLUDED);
+    blockEntry(entries, MainnetHardforkId.HOMESTEAD, config.getHomesteadBlockNumber());
+    blockEntry(
+        entries, MainnetHardforkId.TANGERINE_WHISTLE, config.getTangerineWhistleBlockNumber());
+    blockEntry(entries, MainnetHardforkId.SPURIOUS_DRAGON, config.getSpuriousDragonBlockNumber());
+    blockEntry(entries, MainnetHardforkId.BYZANTIUM, config.getByzantiumBlockNumber());
+    blockEntry(entries, MainnetHardforkId.CONSTANTINOPLE, config.getConstantinopleBlockNumber());
+    blockEntry(entries, MainnetHardforkId.PETERSBURG, config.getPetersburgBlockNumber());
+    blockEntry(entries, MainnetHardforkId.ISTANBUL, config.getIstanbulBlockNumber());
+    blockEntry(entries, MainnetHardforkId.MUIR_GLACIER, config.getMuirGlacierBlockNumber());
+    blockEntry(entries, MainnetHardforkId.BERLIN, config.getBerlinBlockNumber());
+    blockEntry(entries, MainnetHardforkId.LONDON, config.getLondonBlockNumber());
+    blockEntry(entries, MainnetHardforkId.ARROW_GLACIER, config.getArrowGlacierBlockNumber());
+    blockEntry(entries, MainnetHardforkId.GRAY_GLACIER, config.getGrayGlacierBlockNumber());
+    blockEntry(entries, MainnetHardforkId.PARIS, config.getMergeNetSplitBlockNumber());
+    timestampEntry(entries, MainnetHardforkId.SHANGHAI, config.getShanghaiTime());
+    timestampEntry(entries, MainnetHardforkId.CANCUN, config.getCancunTime());
+    timestampEntry(entries, MainnetHardforkId.PRAGUE, config.getPragueTime());
+    timestampEntry(entries, MainnetHardforkId.OSAKA, config.getOsakaTime());
+    timestampEntry(entries, MainnetHardforkId.BPO1, config.getBpo1Time());
+    timestampEntry(entries, MainnetHardforkId.BPO2, config.getBpo2Time());
+    timestampEntry(entries, MainnetHardforkId.BPO3, config.getBpo3Time());
+    timestampEntry(entries, MainnetHardforkId.BPO4, config.getBpo4Time());
+    timestampEntry(entries, MainnetHardforkId.BPO5, config.getBpo5Time());
+    timestampEntry(entries, MainnetHardforkId.AMSTERDAM, config.getAmsterdamTime());
+    timestampEntry(entries, MainnetHardforkId.FUTURE_EIPS, config.getFutureEipsTime());
+    timestampEntry(entries, MainnetHardforkId.EXPERIMENTAL_EIPS, config.getExperimentalEipsTime());
+    return entries;
+  }
+
+  /**
+   * The DAO fork as a plan entry: an EIP-2124 boundary whose schedule effect is Homestead plus the
+   * block-number-guarded DAO behaviours (see {@code MainnetProtocolSpecs.daoForkDefinition}). The
+   * guarded behaviours are not derivable from a hardfork id, so the schedule resolves this entry
+   * specially; the built-in reference records the rule set it overlays.
+   */
+  private static ForkEntry daoForkEntry(final long daoForkBlock) {
+    return new ForkEntry(
+        "DAOForkBlock",
+        new Activation.BlockNumber(daoForkBlock),
+        new ScheduleEffect.BuiltInHardfork(MainnetHardforkId.HOMESTEAD),
+        ForkIdBoundary.INCLUDED);
+  }
+
+  private static void blockEntry(
+      final List<ForkEntry> entries,
+      final MainnetHardforkId hardforkId,
+      final OptionalLong activation) {
+    blockEntry(entries, hardforkId, activation, ForkIdBoundary.INCLUDED);
+  }
+
+  private static void blockEntry(
+      final List<ForkEntry> entries,
+      final MainnetHardforkId hardforkId,
+      final OptionalLong activation,
+      final ForkIdBoundary boundary) {
+    activation.ifPresent(
+        value ->
+            entries.add(
+                new ForkEntry(
+                    hardforkId.name(),
+                    new Activation.BlockNumber(value),
+                    new ScheduleEffect.BuiltInHardfork(hardforkId),
+                    boundary)));
+  }
+
+  private static void timestampEntry(
+      final List<ForkEntry> entries,
+      final MainnetHardforkId hardforkId,
+      final OptionalLong activation) {
+    activation.ifPresent(
+        value ->
+            entries.add(
+                new ForkEntry(
+                    hardforkId.name(),
+                    new Activation.Timestamp(value),
+                    new ScheduleEffect.BuiltInHardfork(hardforkId),
+                    ForkIdBoundary.INCLUDED)));
   }
 
   /**
