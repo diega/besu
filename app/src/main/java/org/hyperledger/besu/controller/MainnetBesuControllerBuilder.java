@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.ServiceManager;
 
 import java.util.Optional;
 
@@ -71,7 +73,8 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         badBlockManager,
         isParallelTxProcessingEnabled,
         balConfiguration,
-        metricsSystem);
+        metricsSystem,
+        besuComponent.<ServiceManager>map(BesuComponent::getBesuPluginContext));
   }
 
   @Override

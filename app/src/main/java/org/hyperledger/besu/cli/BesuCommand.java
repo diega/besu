@@ -90,6 +90,7 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.DiscoveryOptions;
+import org.hyperledger.besu.config.ForkIdActivations;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
@@ -126,6 +127,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleCustomizer;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeIdentifier;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
@@ -1700,15 +1702,25 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private GenesisConfig readGenesisConfig() {
-    GenesisConfig effectiveGenesisFile;
-    effectiveGenesisFile =
-        network.equals(EPHEMERY)
-            ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
-            : genesisFile != null
-                ? GenesisConfig.fromConfig(loadAndTransformGenesisFile(genesisFile))
-                : GenesisConfig.fromResource(
-                    Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
-    return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
+    final GenesisConfig effectiveGenesisFile =
+        (network.equals(EPHEMERY)
+                ? EphemeryGenesisUpdater.updateGenesis(genesisConfigOverrides)
+                : genesisFile != null
+                    ? GenesisConfig.fromConfig(loadAndTransformGenesisFile(genesisFile))
+                    : GenesisConfig.fromResource(
+                        Optional.ofNullable(network).orElse(MAINNET).getGenesisFile()))
+            .withOverrides(genesisConfigOverrides);
+    // Fold the active chain's customizer fork-id activations into the config, so every consumer of
+    // getForkBlockNumbers()/getForkBlockTimestamps() — the p2p fork ID and the eth_config RPC alike
+    // — reads one complete schedule, derived from the same source that defines the forks (the
+    // consensus customizer). No effect when no customizer is registered.
+    final ForkIdActivations forkIds =
+        besuPluginContext
+            .getService(ProtocolScheduleCustomizer.class)
+            .map(
+                customizer -> customizer.forkIdActivations(effectiveGenesisFile.getConfigOptions()))
+            .orElseGet(ForkIdActivations::empty);
+    return effectiveGenesisFile.withAdditionalForkIdActivations(forkIds);
   }
 
   private GenesisConfigOptions readGenesisConfigOptions() {
