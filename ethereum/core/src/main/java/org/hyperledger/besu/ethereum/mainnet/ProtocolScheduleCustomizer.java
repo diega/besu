@@ -76,9 +76,10 @@ public interface ProtocolScheduleCustomizer extends BesuService {
 
   /**
    * Folds the registered customizer's adapters (if any) over a protocol-schedule path's own base
-   * modifiers, producing the {@link ProtocolSpecAdapters} that path should build with. The mainnet
-   * schedule construction composes its adapters here, so the rules a node enforces stay consistent
-   * with the fork ID derived from {@link #forkIdActivations}.
+   * modifiers, producing the {@link ProtocolSpecAdapters} that path should build with. Every
+   * schedule path (mainnet, merge, fixed-difficulty) composes its adapters here, so the rules a
+   * node enforces stay consistent across paths — and consistent with the fork ID derived from
+   * {@link #forkIdActivations}.
    *
    * <p>Where a customizer adapter shares a block with one of the path's structural modifiers, the
    * two are composed (the structural modifier first, then the customizer's) rather than one

@@ -112,7 +112,8 @@ public class MainnetProtocolSchedule {
           badBlockManager,
           isParallelTxProcessingEnabled,
           balConfiguration,
-          metricsSystem);
+          metricsSystem,
+          serviceManager);
     }
 
     final ProtocolSpecAdapters adapters = buildAdapters(config, serviceManager);
