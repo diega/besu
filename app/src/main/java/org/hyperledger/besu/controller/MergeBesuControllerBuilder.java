@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
@@ -46,6 +47,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.ServiceManager;
 
 import java.util.List;
 import java.util.Optional;
@@ -185,7 +187,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         isParallelTxProcessingEnabled,
         balConfiguration,
         metricsSystem,
-        evmConfiguration);
+        evmConfiguration,
+        besuComponent.<ServiceManager>map(BesuComponent::getBesuPluginContext));
   }
 
   @Override

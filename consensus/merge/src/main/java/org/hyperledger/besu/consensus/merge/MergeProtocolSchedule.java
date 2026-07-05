@@ -25,12 +25,13 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleCustomizer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
@@ -57,6 +58,7 @@ public class MergeProtocolSchedule {
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @param evmConfiguration the evm configuration
+   * @param serviceManager the service manager to query for plugin-provided customizers, if present
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -67,7 +69,8 @@ public class MergeProtocolSchedule {
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final Optional<ServiceManager> serviceManager) {
 
     Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
         new HashMap<>();
@@ -81,7 +84,8 @@ public class MergeProtocolSchedule {
     return new ProtocolScheduleBuilder(
             config,
             Optional.of(DEFAULT_CHAIN_ID),
-            new ProtocolSpecAdapters(postMergeModifications),
+            ProtocolScheduleCustomizer.composeAdapters(
+                postMergeModifications, config, serviceManager),
             isRevertReasonEnabled,
             evmConfiguration,
             miningConfiguration,
@@ -90,6 +94,40 @@ public class MergeProtocolSchedule {
             balConfiguration,
             metricsSystem)
         .createProtocolSchedule();
+  }
+
+  /**
+   * Create protocol schedule without a plugin customizer (no {@link ServiceManager} to query).
+   *
+   * @param config the config
+   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param miningConfiguration the mining parameters
+   * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
+   * @param balConfiguration configuration related to block access lists
+   * @param metricsSystem A metricSystem instance to expose metrics in the underlying calls
+   * @param evmConfiguration the evm configuration
+   * @return the protocol schedule
+   */
+  public static ProtocolSchedule create(
+      final GenesisConfigOptions config,
+      final boolean isRevertReasonEnabled,
+      final MiningConfiguration miningConfiguration,
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem,
+      final EvmConfiguration evmConfiguration) {
+    return create(
+        config,
+        isRevertReasonEnabled,
+        miningConfiguration,
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        balConfiguration,
+        metricsSystem,
+        evmConfiguration,
+        Optional.empty());
   }
 
   /**
