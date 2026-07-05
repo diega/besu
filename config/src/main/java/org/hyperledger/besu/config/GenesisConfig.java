@@ -147,9 +147,9 @@ public class GenesisConfig {
 
   /**
    * Adds fork activations to be merged into the EIP-2124 fork schedule, on top of those declared by
-   * the genesis config keys. Intended for activations an embedder knows out of band, which the
-   * genesis config cannot express as standard keys. Mutates and returns this config (as does {@link
-   * #withOverrides}).
+   * the genesis config keys. Intended for activations an embedder knows out of band -- for example
+   * a {@code ProtocolScheduleCustomizer}'s fork activations -- which the genesis config cannot
+   * express as standard keys. Mutates and returns this config (as does {@link #withOverrides}).
    *
    * @param activations the additional fork activations
    * @return this config
