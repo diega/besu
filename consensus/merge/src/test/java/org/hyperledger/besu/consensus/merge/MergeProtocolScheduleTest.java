@@ -20,6 +20,8 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PARIS;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -31,15 +33,22 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleCustomizer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PraguePreExecutionProcessor;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.ServiceManager;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 
@@ -72,6 +81,56 @@ public class MergeProtocolScheduleTest {
     assertThat(homesteadSpec).isNotEqualTo(londonSpec);
     assertThat(homesteadSpec.getFeeMarket().implementsBaseFee()).isFalse();
     assertThat(londonSpec.getFeeMarket().implementsBaseFee()).isTrue();
+  }
+
+  @Test
+  public void customizerForkActivationsAreEnforcedPostMergeAndMatchTheForkId() {
+    final String jsonInput =
+        "{\"config\": "
+            + "{\"chainId\": 1,\n"
+            + "\"homesteadBlock\": 1,\n"
+            + "\"LondonBlock\": 1559}"
+            + "}";
+    final GenesisConfigOptions config = GenesisConfig.fromConfig(jsonInput).getConfigOptions();
+
+    final long activationBlock = 5_000_000L;
+    final Wei customReward = Wei.of(42_000_000L);
+
+    // A customizer that introduces a consensus change (a custom block reward) at activationBlock.
+    final ProtocolScheduleCustomizer customizer =
+        cfg -> {
+          final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> adapters =
+              new HashMap<>();
+          adapters.put(activationBlock, builder -> builder.blockReward(customReward));
+          return adapters;
+        };
+
+    final ServiceManager serviceManager = mock(ServiceManager.class);
+    when(serviceManager.getService(ProtocolScheduleCustomizer.class))
+        .thenReturn(Optional.of(customizer));
+
+    final ProtocolSchedule protocolSchedule =
+        MergeProtocolSchedule.create(
+            config,
+            false,
+            MiningConfiguration.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            BalConfiguration.DEFAULT,
+            new NoOpMetricsSystem(),
+            EvmConfiguration.DEFAULT,
+            Optional.of(serviceManager));
+
+    // (1) The post-merge schedule enforces the customizer's rule at its activation...
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(activationBlock)).getBlockReward())
+        .isEqualTo(customReward);
+    // ...and not before it.
+    assertThat(protocolSchedule.getByBlockHeader(blockHeader(activationBlock - 1)).getBlockReward())
+        .isNotEqualTo(customReward);
+
+    // (2) ...and that same activation is what the customizer folds into the fork ID, so the
+    // advertised fork ID cannot drift from the rules the schedule enforces.
+    assertThat(customizer.forkIdActivations(config).blockNumbers()).contains(activationBlock);
   }
 
   @Test

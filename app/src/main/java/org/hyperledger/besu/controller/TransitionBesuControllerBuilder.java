@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
@@ -408,6 +409,15 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final DataStorageConfiguration dataStorageConfiguration) {
     super.dataStorageConfiguration(dataStorageConfiguration);
     return propagateConfig(z -> z.dataStorageConfiguration(dataStorageConfiguration));
+  }
+
+  @Override
+  public BesuControllerBuilder besuComponent(final BesuComponent besuComponent) {
+    super.besuComponent(besuComponent);
+    // Propagate to the sub-builders so each one's createProtocolSchedule() can resolve a
+    // registered ProtocolScheduleCustomizer; otherwise a TTD network would advertise the
+    // customizer's fork-id activations without applying its rules on either merge path.
+    return propagateConfig(z -> z.besuComponent(besuComponent));
   }
 
   private BesuControllerBuilder propagateConfig(final Consumer<BesuControllerBuilder> toPropagate) {
