@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -68,6 +69,52 @@ public class JsonGenesisConfigOptionsTest {
     ((ObjectNode) ibftNode.get(0)).remove("validators");
 
     return configNode;
+  }
+
+  @Test
+  public void additionalForkActivationsAreMergedIntoTheForkSchedule() {
+    final ObjectNode config =
+        JsonUtil.objectNodeFromString("{\"homesteadblock\":10,\"shanghaitime\":1000}");
+
+    // no additional activations: just the genesis-declared forks
+    assertThat(JsonGenesisConfigOptions.fromJsonObject(config).getForkBlockNumbers())
+        .containsExactly(10L);
+    assertThat(JsonGenesisConfigOptions.fromJsonObject(config).getForkBlockTimestamps())
+        .containsExactly(1000L);
+
+    // additional activations are unioned in, sorted and de-duplicated; genesis forks remain
+    final GenesisConfigOptions merged =
+        JsonGenesisConfigOptions.fromJsonObject(
+            config, new ForkIdActivations(List.of(22L, 11L, 10L), List.of(2000L)));
+    assertThat(merged.getForkBlockNumbers()).containsExactly(10L, 11L, 22L);
+    assertThat(merged.getForkBlockTimestamps()).containsExactly(1000L, 2000L);
+  }
+
+  @Test
+  public void equalsAndHashCodeAccountForAdditionalForkActivations() {
+    final ObjectNode config =
+        JsonUtil.objectNodeFromString("{\"homesteadblock\":10,\"shanghaitime\":1000}");
+
+    final GenesisConfigOptions noExtras = JsonGenesisConfigOptions.fromJsonObject(config);
+    final GenesisConfigOptions withBlocks =
+        JsonGenesisConfigOptions.fromJsonObject(
+            config, ForkIdActivations.ofBlockNumbers(List.of(11L)));
+    final GenesisConfigOptions withTimestamps =
+        JsonGenesisConfigOptions.fromJsonObject(
+            config, new ForkIdActivations(List.of(), List.of(2000L)));
+    final GenesisConfigOptions sameAsWithBlocks =
+        JsonGenesisConfigOptions.fromJsonObject(
+            config, ForkIdActivations.ofBlockNumbers(List.of(11L)));
+
+    // the additional activations are part of the object's identity: differing only by them
+    // must not compare equal, otherwise a cache keyed on the options could serve a stale fork ID
+    assertThat(withBlocks).isNotEqualTo(noExtras);
+    assertThat(withTimestamps).isNotEqualTo(noExtras);
+    assertThat(withBlocks).isNotEqualTo(withTimestamps);
+
+    // same config and same activations remain equal, with a consistent hashCode
+    assertThat(withBlocks).isEqualTo(sameAsWithBlocks);
+    assertThat(withBlocks).hasSameHashCodeAs(sameAsWithBlocks);
   }
 
   @Test
