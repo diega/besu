@@ -53,7 +53,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NativeRequirement;
+import org.hyperledger.besu.config.ForkIdActivations;
 import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfiguration;
 import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -69,6 +71,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleCustomizer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
@@ -560,6 +563,51 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.dnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(1));
     verify(mockLogger, never()).warn(contains("Mainnet is deprecated and will be shutdown"));
+  }
+
+  @Test
+  public void customizerForkActivationsAreFoldedIntoTheGenesisConfigOptions() {
+    final ProtocolScheduleCustomizer customizer =
+        org.mockito.Mockito.mock(ProtocolScheduleCustomizer.class);
+    // lenient: the besuPluginContext mock also receives getService(BesuConfigurationImpl) during
+    // command construction, which this test does not stub.
+    org.mockito.Mockito.lenient()
+        .doReturn(Optional.of(customizer))
+        .when(getBesuPluginContext())
+        .getService(ProtocolScheduleCustomizer.class);
+    org.mockito.Mockito.when(customizer.forkIdActivations(any()))
+        .thenReturn(new ForkIdActivations(List.of(11L, 22L), List.of()));
+
+    final TestBesuCommand command = parseCommand("--network", "mainnet");
+
+    // The p2p ForkIdManager and the eth_config RPC both build a ForkIdManager from this same
+    // GenesisConfigOptions; the customizer's activations are unioned into the genesis-derived list.
+    final GenesisConfigOptions options = command.getGenesisConfigOptions();
+    assertThat(options.getForkBlockNumbers()).contains(11L, 22L);
+    assertThat(options.getForkBlockNumbers()).contains(1_150_000L); // homestead, from the genesis
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void customizerTimestampActivationsAreFoldedIntoTheTimestampList() {
+    final ProtocolScheduleCustomizer customizer =
+        org.mockito.Mockito.mock(ProtocolScheduleCustomizer.class);
+    org.mockito.Mockito.lenient()
+        .doReturn(Optional.of(customizer))
+        .when(getBesuPluginContext())
+        .getService(ProtocolScheduleCustomizer.class);
+    // the customizer declares a block activation and a timestamp activation, typed explicitly
+    org.mockito.Mockito.when(customizer.forkIdActivations(any()))
+        .thenReturn(new ForkIdActivations(List.of(16_000_000L), List.of(2_000_000_000L)));
+
+    final TestBesuCommand command = parseCommand("--network", "mainnet");
+
+    final GenesisConfigOptions options = command.getGenesisConfigOptions();
+    assertThat(options.getForkBlockNumbers()).contains(16_000_000L).doesNotContain(2_000_000_000L);
+    assertThat(options.getForkBlockTimestamps())
+        .contains(2_000_000_000L)
+        .doesNotContain(16_000_000L);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
