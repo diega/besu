@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -25,9 +24,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 /**
- * A generic block creator that produces blocks with zero difficulty and zero nonce. Suitable for
- * block assembly contexts (such as JSON block import) that do not require consensus-specific
- * sealing.
+ * A generic block creator that produces blocks with the difficulty prescribed by the protocol
+ * schedule and a zero nonce. Suitable for block assembly contexts (such as JSON block import or
+ * externally sealed block production) that do not require consensus-specific sealing.
  */
 public class GenericBlockCreator extends AbstractBlockCreator {
 
@@ -52,7 +51,6 @@ public class GenericBlockCreator extends AbstractBlockCreator {
   @Override
   protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
     return BlockHeaderBuilder.create()
-        .difficulty(Difficulty.ZERO)
         .populateFrom(sealableBlockHeader)
         .nonce(0L)
         .blockHeaderFunctions(blockHeaderFunctions)
