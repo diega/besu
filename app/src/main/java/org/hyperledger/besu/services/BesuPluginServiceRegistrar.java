@@ -19,6 +19,7 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.plugin.services.BlockProductionService;
 import org.hyperledger.besu.plugin.services.BlockSimulationService;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 import org.hyperledger.besu.plugin.services.HealthCheckService;
@@ -218,6 +219,16 @@ public final class BesuPluginServiceRegistrar {
             besuController.getTransactionSimulator(),
             besuController.getProtocolSchedule(),
             besuController.getProtocolContext().getBlockchain()));
+
+    pluginContext.addService(
+        BlockProductionService.class,
+        new BlockProductionServiceImpl(
+            besuController.getProtocolContext(),
+            besuController.getProtocolSchedule(),
+            besuController.getTransactionPool(),
+            besuController.getEthScheduler(),
+            besuController.getProtocolManager().getBlockBroadcaster(),
+            miningConfiguration));
 
     besuController.getAdditionalPluginServices().appendPluginServices(pluginContext);
   }
