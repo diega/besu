@@ -35,6 +35,7 @@
 - `engine_newPayloadV4`+ now returns `-32602` for an `executionRequests` element consisting only of a type byte, as execution-apis requires, including when that type byte is one Besu does not recognize. Such an element was previously answered with an `INVALID` payload status. [#11194](https://github.com/besu-eth/besu/pull/11194)
 
 ### Additions and Improvements
+- A plugin can contribute protocol-schedule rules for a chain Besu does not ship, by registering a `ProtocolScheduleCustomizer` through the new `ProtocolScheduleService`. Besu derives the EIP-2124 fork-ID activations from the same contributed modifications, so a chain declares each boundary once instead of stating its rules and its fork ID separately. The extension point is `@Unstable` and lives in `ethereum/core`; nothing is added to `besu-plugin-api`. With no customizer registered, schedule construction is unchanged. [#NNNN](https://github.com/besu-eth/besu/pull/NNNN)
 
 ## 26.8.1
 
